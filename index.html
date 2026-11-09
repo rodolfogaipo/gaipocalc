@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#070B14">
+<meta name="description" content="GAIPO CALC — calculadora que resolve e ensina passo a passo.">
+<title>GAIPO CALC</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="vendor/mathlive/mathlive-fonts.css">
+<link rel="stylesheet" href="vendor/mathlive/mathlive-static.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<div id="abertura" aria-hidden="true"><img src="img/logo-gaipocalc.png" alt=""></div>
+
+<header class="topo">
+  <div class="marca">
+    <img src="img/simbolo.png" alt="" class="marca-ico">
+    <div class="marca-txt"><b>GAIPO</b><span>CALC</span></div>
+  </div>
+  <div class="topo-acoes">
+    <span id="status" class="chip" title="Situação da conexão">offline</span>
+    <button id="btnHistorico" class="ico" aria-label="Histórico"><svg viewBox="0 0 24 24"><path d="M12 7v5l3 2M3.05 11a9 9 0 1 1 .5 4M3 4v5h5"/></svg></button>
+    <button id="btnConfig" class="ico" aria-label="Configurações"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+  </div>
+</header>
+
+<main>
+  <section class="cartao entrada">
+    <nav class="abas" role="tablist">
+      <button role="tab" data-aba="teclado" class="ativa"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 15h10"/></svg>Teclado</button>
+      <button role="tab" data-aba="caneta"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>Caneta</button>
+      <button role="tab" data-aba="foto"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Foto</button>
+      <button role="tab" data-aba="voz"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg>Voz</button>
+    </nav>
+
+    <div class="painel" data-painel="teclado">
+      <math-field id="campo" aria-label="Digite a conta" math-virtual-keyboard-policy="auto"></math-field>
+      <div class="atalhos" id="atalhos">
+        <button data-ins="\frac{#@}{#?}">a/b</button>
+        <button data-ins="#@^{#?}">xⁿ</button>
+        <button data-ins="\sqrt{#0}">√</button>
+        <button data-ins="=">=</button>
+        <button data-ins="\frac{d}{dx}\left(#0\right)">d/dx</button>
+        <button data-ins="\int #0\,dx">∫</button>
+        <button data-ins="\int_{#?}^{#?} #0\,dx">∫ₐᵇ</button>
+        <button data-ins="\lim_{x\to #?} #0">lim</button>
+        <button data-ins="\begin{cases}#0\\#?\end{cases}">sistema</button>
+        <button data-ins="\operatorname{mmc}\left(#0;#?\right)">mmc</button>
+        <button data-ins="\operatorname{mdc}\left(#0;#?\right)">mdc</button>
+        <button data-ins="\operatorname{fatorar}\left(#0\right)">primos</button>
+      </div>
+    </div>
+
+    <div class="painel" data-painel="caneta" hidden>
+      <div class="papel-wrap"><canvas id="papel" aria-label="Escreva a conta com o dedo ou caneta"></canvas></div>
+      <div class="barra-caneta">
+        <button id="canDesfazer" class="sec">Desfazer</button>
+        <button id="canLimpar" class="sec">Limpar</button>
+        <label class="espessura">Traço <input id="canEsp" type="range" min="2" max="9" value="4"></label>
+      </div>
+      <p class="dica" id="dicaCaneta">Escreva como no caderno. A leitura da letra usa a IA e precisa de internet.</p>
+    </div>
+
+    <div class="painel" data-painel="foto" hidden>
+      <div class="foto-acoes">
+        <button id="fotoCamera" class="sec grande"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Tirar foto</button>
+        <button id="fotoGaleria" class="sec grande"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Da galeria</button>
+        <input id="fotoArquivo" type="file" accept="image/*" hidden>
+        <input id="fotoArquivoCam" type="file" accept="image/*" capture="environment" hidden>
+      </div>
+      <div id="fotoPrevia" class="foto-previa" hidden><img id="fotoImg" alt="Foto da questão"><button id="fotoGirar" class="sec mini">Girar ↻</button></div>
+      <p class="dica">Enquadre só uma questão, com boa luz. A leitura da foto usa a IA e precisa de internet.</p>
+    </div>
+
+    <div class="painel" data-painel="voz" hidden>
+      <button id="btnMic" class="mic" aria-label="Falar a conta"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg></button>
+      <p id="vozTexto" class="voz-texto">Toque no microfone e fale a conta.<br><small>Ex.: “dois x mais três igual a sete”, “raiz de 144”, “derivada de x ao cubo”.</small></p>
+    </div>
+
+    <div class="acoes-principais">
+      <button id="btnResolver" class="primario">Resolver</button>
+      <button id="btnLimparTudo" class="sec" aria-label="Limpar">Limpar</button>
+    </div>
+  </section>
+
+  <section id="resultado" class="cartao resultado" hidden>
+    <div class="res-topo">
+      <span id="resTipo" class="tag"></span>
+      <span id="resOrigem" class="origem"></span>
+    </div>
+    <div class="res-questao"><small>Questão</small><div id="resQuestao" class="mat"></div></div>
+    <div class="res-resposta"><small>Resposta</small><div id="resResposta" class="mat grande"></div><div id="resDecimal" class="decimal"></div><div id="resConjunto" class="mat conj"></div></div>
+    <div id="resAviso" class="aviso" hidden></div>
+    <div class="res-acoes">
+      <button id="btnPassos" class="primario sec-azul">Ver passo a passo</button>
+      <button id="btnIA" class="sec">Explicar com IA</button>
+    </div>
+    <ol id="passos" class="passos" hidden></ol>
+    <div id="iaBloco" class="ia-bloco" hidden>
+      <h3>Explicação da IA</h3>
+      <div id="iaConteudo"></div>
+    </div>
+  </section>
+
+  <section id="carregando" class="cartao carregando" hidden><div class="spin"></div><span id="carregandoTxt">Pensando…</span></section>
+</main>
+
+<dialog id="dlgConfig" class="dlg">
+  <form method="dialog">
+    <h2>Configurações</h2>
+    <label>Nível das explicações da IA
+      <select id="cfgNivel"><option value="fundamental">Ensino fundamental</option><option value="medio">Ensino médio</option><option value="faculdade">Faculdade</option></select>
+    </label>
+    <label>Ângulos (seno, cosseno, tangente)
+      <select id="cfgAngulo"><option value="graus">Graus (sen 30 = 1/2)</option><option value="rad">Radianos (sen π/6 = 1/2)</option></select>
+    </label>
+    <details>
+      <summary>Servidor da IA (avançado)</summary>
+      <label>Endereço do servidor <input id="cfgServidor" type="url" placeholder="https://gaipocalc-ia.SEU-USUARIO.workers.dev" autocomplete="off"></label>
+      <label>Código do app <input id="cfgChave" type="password" autocomplete="off"></label>
+      <button type="button" id="cfgTestar" class="sec mini">Testar conexão</button> <span id="cfgTesteRes"></span>
+    </details>
+    <div class="sobre">
+      <img src="img/gaipo-g.png" alt="GAIPO">
+      <div><b>GAIPO CALC</b> <span id="versao"></span><br><small>Desenvolvido por GAIPO Intelligent Engineering</small></div>
+    </div>
+    <div class="dlg-acoes"><button value="ok" class="primario">Salvar</button></div>
+  </form>
+</dialog>
+
+<dialog id="dlgHistorico" class="dlg">
+  <form method="dialog">
+    <h2>Histórico</h2>
+    <ul id="listaHistorico" class="historico"></ul>
+    <div class="dlg-acoes"><button type="button" id="histLimpar" class="sec">Apagar tudo</button><button value="ok" class="primario">Fechar</button></div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script src="vendor/nerdamer.js"></script>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

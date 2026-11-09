@@ -1,0 +1,49 @@
+name: Gerar APK do GAIPO CALC
+on:
+  push:
+    branches: [main]
+    paths-ignore: ['servidor/**', '**.md']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: apk
+  cancel-in-progress: true
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Testes do motor de cálculo
+        run: node testes/motor.test.mjs
+  apk:
+    needs: testes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: site
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Montar e assinar o APK
+        env:
+          GAIPO_SERVIDOR: ${{ vars.GAIPO_SERVIDOR }}
+          GAIPO_CHAVE_APP: ${{ secrets.GAIPO_CHAVE_APP }}
+        run: bash site/apk/montar.sh
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: apk-${{ github.run_number }}
+          name: GAIPO CALC versão 1.${{ github.run_number }}
+          body: |
+            Baixe o arquivo **GAIPO-CALC.apk** abaixo e abra no celular Android para instalar.
+            (Se o Android pedir, permita "instalar apps desta fonte".)
+          files: GAIPO-CALC.apk
+          make_latest: true
