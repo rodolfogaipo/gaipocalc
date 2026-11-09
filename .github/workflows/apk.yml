@@ -33,6 +33,10 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+      - name: Instalar ImageMagick (tela de abertura)
+        run: |
+          command -v convert >/dev/null || { sudo apt-get update -q && sudo apt-get install -y -q imagemagick; }
+          convert -version | head -1
       - name: Montar e assinar o APK
         run: bash site/apk/montar.sh
       - uses: softprops/action-gh-release@v2
