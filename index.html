@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="theme-color" content="#ffffff">
 <meta name="description" content="GAIPO CALC — calculadora que resolve e ensina passo a passo.">
 <title>GAIPO CALC</title>
@@ -16,137 +16,135 @@
 <body>
 <div id="abertura" aria-hidden="true"><img src="img/logo-gaipocalc.png" alt=""></div>
 
-<header class="topo">
-  <div class="marca">
-    <img src="img/simbolo.png" alt="" class="marca-ico">
-    <div class="marca-txt"><b>GAIPO</b><span>CALC</span></div>
-  </div>
-  <div class="topo-acoes">
-    <button id="btnHistorico" class="ico" aria-label="Histórico"><svg viewBox="0 0 24 24"><path d="M12 7v5l3 2M3.05 11a9 9 0 1 1 .5 4M3 4v5h5"/></svg></button>
-    <button id="btnConfig" class="ico" aria-label="Configurações"><svg viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg></button>
-  </div>
-</header>
+<div class="app">
+  <header class="appbar">
+    <img src="img/simbolo.png" alt="" class="appbar-logo">
+    <div class="appbar-nome">GAIPO <span>CALC</span></div>
+    <button id="btnHistorico" class="icone" aria-label="Histórico"><svg viewBox="0 0 24 24"><path d="M12 7v5l3 2M3.05 11a9 9 0 1 1 .5 4M3 4v5h5"/></svg></button>
+    <button id="btnConfig" class="icone" aria-label="Configurações"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  </header>
 
-<main>
-  <section class="ola">
-    <h1>O que vamos <span>calcular</span> hoje?</h1>
-    <p>Digite, escreva, fotografe ou fale. Eu resolvo e explico cada passo — <b>grátis e sem internet</b>.</p>
-  </section>
-
-  <section class="cartao entrada">
-    <nav class="abas" role="tablist">
-      <button role="tab" data-aba="teclado" class="ativa"><i class="ic azul"><svg viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="13" rx="3"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 15h10"/></svg></i>Teclado</button>
-      <button role="tab" data-aba="caneta"><i class="ic roxo"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></i>Caneta</button>
-      <button role="tab" data-aba="foto"><i class="ic laranja"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></i>Foto</button>
-      <button role="tab" data-aba="voz"><i class="ic verde"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg></i>Voz</button>
-    </nav>
-
-    <div class="painel" data-painel="teclado">
-      <math-field id="campo" aria-label="Digite a conta" math-virtual-keyboard-policy="auto"></math-field>
-      <div class="atalhos" id="atalhos">
-        <button data-ins="\frac{#@}{#?}">a/b</button>
-        <button data-ins="#@^{#?}">xⁿ</button>
-        <button data-ins="\sqrt{#0}">√</button>
-        <button data-ins="=">=</button>
-        <button data-ins="\frac{d}{dx}\left(#0\right)">d/dx</button>
-        <button data-ins="\int #0\,dx">∫</button>
-        <button data-ins="\int_{#?}^{#?} #0\,dx">∫ₐᵇ</button>
-        <button data-ins="\lim_{x\to #?} #0">lim</button>
-        <button data-ins="\begin{cases}#0\\#?\end{cases}">sistema</button>
-        <button data-ins="\operatorname{mmc}\left(#0;#?\right)">mmc</button>
-        <button data-ins="\operatorname{mdc}\left(#0;#?\right)">mdc</button>
-        <button data-ins="\operatorname{fatorar}\left(#0\right)">primos</button>
+  <div class="telas">
+    <!-- CALCULAR -->
+    <section class="tela" data-tela="teclado">
+      <div class="visor">
+        <div class="exemplos" id="exemplos"><span>Experimente</span><div id="exGrade" class="ex-linha"></div></div>
+        <math-field id="campo" aria-label="Digite a conta" math-virtual-keyboard-policy="manual"></math-field>
+        <div class="previa" id="previa"></div>
       </div>
-    </div>
+      <div class="barra-acao">
+        <button id="btnLimpar" class="btn-tom" aria-label="Apagar tudo">AC</button>
+        <button id="btnResolver" class="btn-principal">Resolver</button>
+      </div>
+      <div class="doca" id="doca"></div>
+    </section>
 
-    <div class="painel" data-painel="caneta" hidden>
+    <!-- ESCREVER -->
+    <section class="tela" data-tela="caneta" hidden>
       <div class="caneta-caixa" id="canetaCaixa">
-        <div class="cheia-barra">
-          <button id="cheiaFechar" class="ico" aria-label="Sair da tela cheia"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
-          <b>Folha</b>
-          <span class="espaco"></span>
-          <button id="cheiaDesfazer" class="sec mini">Desfazer</button>
-          <button id="cheiaLimpar" class="sec mini">Limpar</button>
-          <button id="cheiaLer" class="primario mini">Resolver</button>
-        </div>
         <div class="folha" id="folha"><canvas id="papel" aria-label="Escreva a conta com o dedo ou caneta"></canvas></div>
+        <div class="flutuante esquerda">
+          <button id="canDesfazer" class="redondo" aria-label="Desfazer"><svg viewBox="0 0 24 24"><path d="M3 7v6h6M3 13a9 9 0 1 0 3-7.7L3 8"/></svg></button>
+          <button id="canLimpar" class="redondo" aria-label="Limpar folha"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg></button>
+          <button id="canCheia" class="redondo" aria-label="Tela cheia deitada"><svg id="icoCheia" viewBox="0 0 24 24"><path d="M8 3H3v5M21 8V3h-5M16 21h5v-5M3 16v5h5"/></svg></button>
+        </div>
+        <button id="canResolver" class="fab">Resolver</button>
+        <div class="dica-folha" id="dicaFolha">Escreva aqui · role com <b>2 dedos</b> · leio a <b>última conta</b></div>
       </div>
-      <div class="barra-caneta">
-        <button id="canDesfazer" class="sec mini"><svg viewBox="0 0 24 24"><path d="M3 7v6h6M3 13a9 9 0 1 0 3-7.7L3 8"/></svg>Desfazer</button>
-        <button id="canLimpar" class="sec mini"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></svg>Limpar</button>
-        <button id="canCheia" class="sec mini"><svg viewBox="0 0 24 24"><path d="M8 3H3v5M21 8V3h-5M16 21h5v-5M3 16v5h5"/></svg>Tela cheia</button>
-        <label class="espessura" title="Grossura do traço"><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg><input id="canEsp" type="range" min="2" max="9" value="4"></label>
-      </div>
-      <p class="dica" id="dicaCaneta">Escreva como no caderno. Role a folha com <b>dois dedos</b>. Eu leio a <b>última conta</b> que você escreveu.</p>
-    </div>
+    </section>
 
-    <div class="painel" data-painel="foto" hidden>
-      <div class="foto-acoes">
-        <button id="fotoCamera" class="sec grande"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>Tirar foto</button>
-        <button id="fotoGaleria" class="sec grande"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>Da galeria</button>
-        <input id="fotoArquivo" type="file" accept="image/*" hidden>
-        <input id="fotoArquivoCam" type="file" accept="image/*" capture="environment" hidden>
+    <!-- FOTO -->
+    <section class="tela" data-tela="foto" hidden>
+      <div class="foto-vazia" id="fotoVazia">
+        <div class="ilustra laranja"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+        <h2>Fotografe a conta</h2>
+        <p>Depois arraste o dedo sobre a foto para marcar só a conta. Funciona melhor com conta escrita à mão e boa luz.</p>
+        <div class="foto-botoes">
+          <button id="fotoCamera" class="btn-principal">Tirar foto</button>
+          <button id="fotoGaleria" class="btn-tom">Galeria</button>
+        </div>
       </div>
       <div id="fotoPrevia" class="foto-previa" hidden>
         <div class="foto-area"><img id="fotoImg" alt="Foto da questão"><div id="fotoSel" class="foto-sel" hidden></div></div>
-        <div class="foto-barra"><button id="fotoGirar" class="sec mini">Girar ↻</button><button id="fotoTudo" class="sec mini">Usar foto inteira</button></div>
+        <div class="foto-acoes">
+          <button id="fotoGirar" class="chip">Girar ↻</button>
+          <button id="fotoTudo" class="chip">Foto inteira</button>
+          <button id="fotoNova" class="chip">Nova foto</button>
+        </div>
+        <button id="fotoResolver" class="fab">Resolver</button>
       </div>
-      <p class="dica">Arraste o dedo sobre a foto para marcar <b>só a conta</b>. Funciona melhor com conta escrita à mão e boa luz.</p>
-    </div>
+      <input id="fotoArquivo" type="file" accept="image/*" hidden>
+      <input id="fotoArquivoCam" type="file" accept="image/*" capture="environment" hidden>
+    </section>
 
-    <div class="painel" data-painel="voz" hidden>
-      <button id="btnMic" class="mic" aria-label="Falar a conta"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg></button>
-      <p id="vozTexto" class="voz-texto">Toque no microfone e fale a conta.<br><small>Ex.: “dois x mais três igual a sete”, “raiz de 144”, “derivada de x ao cubo”.</small></p>
-    </div>
+    <!-- FALAR -->
+    <section class="tela" data-tela="voz" hidden>
+      <div class="voz">
+        <button id="btnMic" class="mic" aria-label="Falar a conta"><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg></button>
+        <p id="vozTexto" class="voz-texto">Toque e fale a conta</p>
+        <div class="voz-exemplos">
+          <span>“dois vezes quatro”</span><span>“x ao quadrado menos 4 igual a zero”</span><span>“raiz de 144”</span><span>“derivada de x ao cubo”</span>
+        </div>
+      </div>
+    </section>
+  </div>
 
-    <div class="acoes-principais">
-      <button id="btnResolver" class="primario">Resolver</button>
-      <button id="btnLimparTudo" class="sec" aria-label="Limpar">Limpar</button>
-    </div>
-  </section>
+  <nav class="navbar">
+    <button data-aba="teclado" class="ativa"><i><svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="3"/><path d="M8 6h8M8 11h.01M12 11h.01M16 11h.01M8 15h.01M12 15h.01M16 15h.01M8 18.5h.01M12 18.5h.01M16 18.5h.01"/></svg></i>Calcular</button>
+    <button data-aba="caneta"><i><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></i>Escrever</button>
+    <button data-aba="foto"><i><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></i>Foto</button>
+    <button data-aba="voz"><i><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg></i>Falar</button>
+  </nav>
+</div>
 
-  <section id="exemplos" class="exemplos">
-    <h2>Experimente</h2>
-    <div class="ex-grade" id="exGrade"></div>
-  </section>
-
-  <section id="resultado" class="cartao resultado" hidden>
-    <div class="res-topo">
-      <span id="resTipo" class="tag"></span>
-      <span id="resOrigem" class="origem"></span>
+<!-- TELA DA SOLUÇÃO -->
+<section id="solucao" class="solucao" hidden>
+  <header class="appbar">
+    <button id="solVoltar" class="icone" aria-label="Voltar"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+    <div class="appbar-titulo">Solução</div>
+    <button id="btnCopiar" class="icone" aria-label="Copiar resposta"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
+  </header>
+  <div class="sol-corpo">
+    <div class="sol-meta"><span id="resTipo" class="tag"></span><span id="resOrigem" class="origem"></span></div>
+    <div class="sol-questao"><div id="resQuestao" class="mat"></div></div>
+    <div class="sol-resposta">
+      <small>Resposta</small>
+      <div id="resResposta" class="mat grande"></div>
+      <div id="resDecimal" class="decimal"></div>
+      <div id="resConjunto" class="mat conj"></div>
     </div>
-    <div class="res-questao"><small>Questão</small><div id="resQuestao" class="mat"></div></div>
-    <div class="res-resposta"><small>Resposta</small><div id="resResposta" class="mat grande"></div><div id="resDecimal" class="decimal"></div><div id="resConjunto" class="mat conj"></div></div>
     <div id="resAviso" class="aviso" hidden></div>
-    <div class="res-acoes">
-      <button id="btnPassos" class="primario">Ver passo a passo</button>
-      <button id="btnCopiar" class="sec">Copiar</button>
-    </div>
+    <button id="btnPassos" class="btn-passos"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Ver passo a passo</span></button>
     <ol id="passos" class="passos" hidden></ol>
-  </section>
+    <button id="solEditar" class="btn-tom largo">Editar a conta</button>
+  </div>
+</section>
 
-  <section id="carregando" class="cartao carregando" hidden><div class="spin"></div><span id="carregandoTxt">Pensando…</span></section>
-</main>
+<!-- CARREGANDO -->
+<div id="carregando" class="carregando" hidden><div class="carregando-caixa"><div class="spin"></div><span id="carregandoTxt">Pensando…</span></div></div>
 
-<dialog id="dlgConfig" class="dlg">
+<!-- FOLHAS (bottom sheets) -->
+<dialog id="dlgConfig" class="folha-baixo">
   <form method="dialog">
+    <div class="pegador"></div>
     <h2>Configurações</h2>
-    <label>Ângulos (seno, cosseno, tangente)
+    <label class="campo-cfg">Ângulos (seno, cosseno, tangente)
       <select id="cfgAngulo"><option value="graus">Graus (sen 30 = 1/2)</option><option value="rad">Radianos (sen π/6 = 1/2)</option></select>
     </label>
     <div class="sobre">
       <img src="img/gaipo-g.png" alt="GAIPO">
       <div><b>GAIPO CALC</b> <span id="versao"></span><br><small>Desenvolvido por GAIPO Intelligent Engineering</small></div>
     </div>
-    <div class="dlg-acoes"><button value="ok" class="primario">Salvar</button></div>
+    <div class="folha-acoes"><button value="ok" class="btn-principal">Salvar</button></div>
   </form>
 </dialog>
 
-<dialog id="dlgHistorico" class="dlg">
+<dialog id="dlgHistorico" class="folha-baixo">
   <form method="dialog">
+    <div class="pegador"></div>
     <h2>Histórico</h2>
     <ul id="listaHistorico" class="historico"></ul>
-    <div class="dlg-acoes"><button type="button" id="histLimpar" class="sec">Apagar tudo</button><button value="ok" class="primario">Fechar</button></div>
+    <div class="folha-acoes"><button type="button" id="histLimpar" class="btn-tom">Apagar tudo</button><button value="ok" class="btn-principal">Fechar</button></div>
   </form>
 </dialog>
 

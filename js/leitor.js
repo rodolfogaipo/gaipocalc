@@ -23,7 +23,7 @@ export function preparar() {
 // LaTeX do modelo ("2 x + 3 = 7") → LaTeX limpo para o teclado
 export function limpar(latex) {
   return String(latex || '')
-    .replace(/\\(left|right)\s*/g, '')
+    .replace(/\\(left|right)(?![a-zA-Z])\s*/g, '')
     .replace(/\s*([{}^_()=+\-])\s*/g, '$1')
     .replace(/\\times/g, '\\cdot ')
     .replace(/\\div/g, '\\div ')

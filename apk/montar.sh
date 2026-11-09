@@ -7,7 +7,7 @@ SITE=$RAIZ/site
 
 mkdir -p app && cd app
 npm init -y > /dev/null
-npm i --no-audit --no-fund @capacitor/core@7.6.9 @capacitor/cli@7.6.9 @capacitor/android@7.6.9 @capacitor/camera@7.0.5 @capacitor-community/speech-recognition@7.0.1
+npm i --no-audit --no-fund @capacitor/core@7.6.9 @capacitor/cli@7.6.9 @capacitor/android@7.6.9 @capacitor/camera@7.0.5 @capacitor-community/speech-recognition@7.0.1 @capacitor/screen-orientation@7.0.4
 
 # Só os arquivos do app vão para dentro do APK
 mkdir www
