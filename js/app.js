@@ -2,11 +2,14 @@
 import { MathfieldElement, convertLatexToMarkup } from '../vendor/mathlive/mathlive.min.js';
 import { resolver, ErroMat, analisar } from './motor/index.js';
 import { criarCAS } from './motor/cas.js';
-import { avaliar, variaveis } from './motor/ast.js';
+import { latex as latexDe } from './motor/ast.js';
 import { falaParaExpressao } from './voz.js';
 import { Caneta } from './caneta.js';
-import * as IA from './ia.js';
 import { VERSAO } from './config.js';
+
+// leitor de letra à mão: carregado só quando precisa (é pesado)
+let leitorMod = null;
+const leitor = () => (leitorMod ||= import('./leitor.js'));
 
 const $ = (id) => document.getElementById(id);
 const Cap = window.Capacitor;
@@ -56,7 +59,7 @@ function configurarTeclado() {
 // ---------- estado ----------
 let aba = 'teclado';
 let ultimo = null; // último resultado mostrado
-let fotoB64 = null, fotoMime = 'image/jpeg', fotoRot = 0, fotoOriginal = null;
+let fotoCanvas = null, fotoRot = 0, fotoOriginal = null, fotoRecorte = null;
 const caneta = new Caneta($('papel'));
 caneta.onMudou = () => {};
 
@@ -80,17 +83,9 @@ function carregando(txt) {
   if (txt) { $('carregandoTxt').textContent = txt; $('carregando').scrollIntoView({ behavior: 'smooth', block: 'center' }); }
   $('btnResolver').disabled = !!txt;
 }
-function opts() { return { cas, graus: IA.config().angulo === 'graus' }; }
-
-function atualizarStatus() {
-  const s = $('status');
-  const on = IA.online();
-  if (!on) { s.textContent = 'offline'; s.className = 'chip'; s.title = 'Sem internet: o teclado e a voz funcionam; foto e caneta precisam da IA.'; }
-  else if (!IA.iaConfigurada()) { s.textContent = 'IA não configurada'; s.className = 'chip ia-off'; s.title = 'Configure o servidor da IA em Configurações.'; }
-  else { s.textContent = 'online · IA'; s.className = 'chip on'; s.title = 'Conectado: IA disponível.'; }
-}
-window.addEventListener('online', atualizarStatus);
-window.addEventListener('offline', atualizarStatus);
+function lerConfig() { try { return JSON.parse(localStorage.getItem('gaipo.config') || '{}'); } catch { return {}; } }
+function salvarConfig(c) { try { localStorage.setItem('gaipo.config', JSON.stringify({ ...lerConfig(), ...c })); } catch { /* sem armazenamento */ } }
+function opts() { return { cas, graus: (lerConfig().angulo || 'graus') === 'graus' }; }
 
 // ---------- abas ----------
 document.querySelectorAll('.abas button').forEach((b) => b.addEventListener('click', () => trocarAba(b.dataset.aba)));
@@ -100,6 +95,7 @@ function trocarAba(nova) {
   document.querySelectorAll('.painel').forEach((p) => (p.hidden = p.dataset.painel !== nova));
   if (nova !== 'teclado') window.mathVirtualKeyboard?.hide?.();
   if (nova === 'caneta') caneta.ajustar();
+  if (nova === 'caneta' || nova === 'foto') leitor().then((m) => m.preparar()).catch(() => {});
   $('btnResolver').textContent = nova === 'caneta' ? 'Ler e resolver' : nova === 'foto' ? 'Ler foto e resolver' : 'Resolver';
 }
 
@@ -158,11 +154,10 @@ function mostrarFalha(latex, msg) {
   const av = $('resAviso');
   av.hidden = false;
   av.className = 'aviso erro';
-  av.textContent = msg + (IA.iaConfigurada() ? ' Toque em “Explicar com IA” para a IA resolver.' : '');
+  av.textContent = msg;
   $('btnPassos').hidden = true;
+  $('btnCopiar').hidden = true;
   $('passos').hidden = true;
-  $('iaBloco').hidden = true;
-  $('btnIA').hidden = false;
   $('resultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -186,10 +181,9 @@ function mostrarResultado(r, origem) {
   av.textContent = avisos.join(' ');
   $('btnPassos').hidden = false;
   $('btnPassos').textContent = 'Ver passo a passo';
-  $('btnIA').hidden = false;
+  $('btnCopiar').hidden = false;
   desenharPassos($('passos'), r.passos.map((p) => ({ titulo: p.titulo, texto: p.texto, latex: p.latex, detalhes: p.detalhes })));
   $('passos').hidden = true;
-  $('iaBloco').hidden = true;
   salvarHistorico(r.entrada, r.resposta, r.titulo);
   $('resultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -224,116 +218,29 @@ $('btnPassos').addEventListener('click', () => {
   if (!ol.hidden) ol.scrollIntoView({ behavior: 'smooth', block: 'start' });
 });
 
-// ---------- IA ----------
-$('btnIA').addEventListener('click', async () => {
+$('btnCopiar').addEventListener('click', async () => {
   if (!ultimo) return;
-  if (!IA.iaConfigurada()) { toast('A IA ainda não foi configurada. Veja Configurações.', true); return; }
-  if (!IA.online()) { toast('Sem internet: a explicação com IA precisa de conexão.', true); return; }
-  carregando('A IA está preparando a explicação…');
-  try {
-    const d = await IA.explicar(ultimo.latex, ultimo.resposta);
-    mostrarIA(d, !ultimo.local);
-  } catch (e) { toast(e.message, true); }
-  finally { carregando(null); }
+  const txt = ($('resResposta').innerText || '').replace(/\s+/g, ' ').trim();
+  try { await navigator.clipboard.writeText(txt); toast('Resposta copiada.'); } catch { toast(txt); }
 });
 
-function mostrarIA(d, substituirResposta) {
-  if (substituirResposta) {
-    $('resTipo').textContent = d.tipo || 'Resultado';
-    mat($('resResposta'), d.resposta_latex);
-    $('resDecimal').textContent = d.resposta_texto || '';
-    $('resOrigem').textContent = 'resolvido pela IA';
-    $('resOrigem').className = 'origem';
-    $('resAviso').hidden = true;
-  }
-  const box = $('iaConteudo');
-  box.innerHTML = '';
-  if (d.observacao) { const a = document.createElement('div'); a.className = 'aviso'; a.textContent = d.observacao; box.append(a); }
-  const ol = document.createElement('ol'); ol.className = 'passos';
-  desenharPassos(ol, (d.passos || []).map((p) => ({ titulo: p.titulo, texto: p.explicacao, latex: p.latex })));
-  box.append(ol);
-  if (d.resposta_texto) { const p = document.createElement('p'); p.className = 'decimal'; p.textContent = 'Resposta: ' + d.resposta_texto; box.append(p); }
-  $('iaBloco').hidden = false;
-  $('iaBloco').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-// resultado que veio da IA (foto/caneta/texto): confere com o motor do aparelho
-function mostrarResultadoIA(d, como) {
-  if (d.latex) mf.value = d.latex;
-  let local = null;
-  if (d.latex) { try { local = resolver(d.latex, opts()); } catch { local = null; } }
-  ultimo = { latex: d.latex || d.lido, resposta: d.resposta_latex, passos: [], local };
-  $('resultado').hidden = false;
-  $('resTipo').textContent = d.tipo || 'Resultado';
-  if (d.latex) mat($('resQuestao'), d.latex); else $('resQuestao').textContent = d.lido || '';
-  mat($('resResposta'), d.resposta_latex);
-  $('resDecimal').textContent = d.resposta_texto || '';
-  $('resConjunto').innerHTML = '';
-  const conf = conferir(d, local);
-  $('resOrigem').textContent = `${como} · ${conf.rotulo}`;
-  $('resOrigem').className = 'origem' + (conf.ok ? ' ok' : '');
-  const av = $('resAviso');
-  const avisos = [];
-  if (d.observacao) avisos.push(d.observacao);
-  if (conf.aviso) avisos.push(conf.aviso);
-  av.hidden = !avisos.length;
-  av.className = 'aviso' + (conf.ok === false ? ' erro' : '');
-  av.textContent = avisos.join(' ');
-  // passo a passo: o da IA (mais completo para foto/caneta)
-  desenharPassos($('passos'), (d.passos || []).map((p) => ({ titulo: p.titulo, texto: p.explicacao, latex: p.latex })));
-  $('passos').hidden = true;
-  $('btnPassos').hidden = false;
-  $('btnPassos').textContent = 'Ver passo a passo';
-  $('btnIA').hidden = true;
-  $('iaBloco').hidden = true;
-  salvarHistorico(d.latex || d.lido, d.resposta_latex, d.tipo);
-  $('resultado').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function numerosDe(latex) {
-  if (!latex) return [];
-  const partes = latex.split(/\\quad|\\qquad|\\text\{[^}]*\}|;|\\\\|,(?![^{]*\})/);
-  const out = [];
-  for (let p of partes) {
-    p = p.replace(/\\left|\\right/g, '').trim();
-    const k = Math.max(p.lastIndexOf('='), p.lastIndexOf('\\approx'));
-    if (k >= 0) p = p.slice(p.lastIndexOf('=') >= p.lastIndexOf('\\approx') ? k + 1 : k + 7);
-    p = p.replace(/\+C\s*$/, '').replace(/^[{(\s]+|[})\s.]+$/g, '').trim();
-    if (!p) continue;
-    try {
-      const a = analisar(p);
-      if (variaveis(a).size) continue;
-      const v = avaliar(a, {}, { graus: false });
-      if (isFinite(v)) out.push(v);
-    } catch { /* ignora */ }
-  }
-  return out;
-}
-
-function conferir(d, local) {
-  if (!d.latex) return { rotulo: 'lido pela IA', ok: null };
-  if (!local) return { rotulo: 'resolvido pela IA', ok: null, aviso: '' };
-  const norm = (s) => (s || '').replace(/\\left|\\right|\\,|\\;|\\!|\s|\\quad|\\qquad|\\text\{[^}]*\}|\{,\}/g, '').replace(/\\dfrac/g, '\\frac');
-  if (norm(d.resposta_latex) === norm(local.resposta)) return { rotulo: '✓ conferido no aparelho', ok: true };
-  const a = numerosDe(d.resposta_latex).sort((x, y) => x - y), b = numerosDe(local.resposta).sort((x, y) => x - y);
-  if (a.length && b.length) {
-    const iguais = a.length === b.length && a.every((x, i) => Math.abs(x - b[i]) <= 1e-6 * (1 + Math.abs(x)));
-    if (iguais) return { rotulo: '✓ conferido no aparelho', ok: true };
-    return { rotulo: '⚠ confira', ok: false, aviso: 'Atenção: a IA e o motor do aparelho chegaram em respostas diferentes. O aparelho calculou: ' + local.resposta.replace(/\\[a-z]+|[{}]/g, ' ').replace(/\s+/g, ' ').trim() + '. Confira a leitura da questão.' };
-  }
-  return { rotulo: 'resolvido pela IA', ok: null };
+// mostra no teclado o que foi lido (para conferir) e resolve
+function usarLeitura(latex, de) {
+  if (!latex) { toast('Não consegui ler. Tente escrever maior e mais separado.', true); return; }
+  mf.value = latex;
+  trocarAba('teclado');
+  toast(`Li da ${de}: confira no campo. Se algo estiver errado, corrija e toque em Resolver.`);
+  resolverLatex(latex);
 }
 
 // ---------- caneta ----------
 async function lerCaneta() {
   if (caneta.vazio) { toast('Escreva a conta no papel primeiro.'); return; }
-  if (!IA.online()) { toast('Sem internet: para ler a letra, a caneta precisa da IA. Use o teclado ou a voz.', true); return; }
-  if (!IA.iaConfigurada()) { toast('A IA ainda não foi configurada. Veja Configurações.', true); return; }
-  carregando('Lendo sua letra e resolvendo…');
+  carregando('Lendo sua letra (no celular)…');
   try {
-    const d = await IA.resolverImagem(caneta.imagem(), 'image/png', 'tinta');
-    mostrarResultadoIA(d, 'lido da caneta');
-  } catch (e) { toast(e.message, true); }
+    const m = await leitor();
+    usarLeitura(await m.lerTracos(caneta.tracos), 'caneta');
+  } catch (e) { console.error(e); toast(e.message || 'Não consegui ler a escrita.', true); }
   finally { carregando(null); }
 }
 
@@ -348,7 +255,7 @@ async function pegarFoto(fonte) {
   const cam = plugin('Camera');
   if (cam) {
     try {
-      const f = await cam.getPhoto({ quality: 85, resultType: 'base64', source: fonte, correctOrientation: true, width: 2000, allowEditing: false, saveToGallery: false });
+      const f = await cam.getPhoto({ quality: 90, resultType: 'base64', source: fonte, correctOrientation: true, width: 2000, allowEditing: false, saveToGallery: false });
       fotoOriginal = `data:image/${f.format || 'jpeg'};base64,${f.base64String}`;
       fotoRot = 0;
       prepararFoto();
@@ -368,36 +275,62 @@ function arquivoFoto(file) {
 function prepararFoto() {
   const img = new Image();
   img.onload = () => {
-    const max = 1600;
+    const max = 1800;
     const esc = Math.min(1, max / Math.max(img.width, img.height));
     const w = Math.round(img.width * esc), h = Math.round(img.height * esc);
     const c = document.createElement('canvas');
     const vira = fotoRot % 180 !== 0;
     c.width = vira ? h : w; c.height = vira ? w : h;
-    const ctx = c.getContext('2d');
+    const ctx = c.getContext('2d', { willReadFrequently: true });
     ctx.translate(c.width / 2, c.height / 2);
     ctx.rotate((fotoRot * Math.PI) / 180);
     ctx.drawImage(img, -w / 2, -h / 2, w, h);
-    const url = c.toDataURL('image/jpeg', 0.85);
-    fotoB64 = url.split(',')[1];
-    fotoMime = 'image/jpeg';
-    $('fotoImg').src = url;
+    fotoCanvas = c;
+    fotoRecorte = null;
+    $('fotoSel').hidden = true;
+    $('fotoImg').src = c.toDataURL('image/jpeg', 0.85);
     $('fotoPrevia').hidden = false;
   };
   img.onerror = () => toast('Não consegui abrir essa imagem.', true);
   img.src = fotoOriginal;
 }
-function limparFoto() { fotoB64 = null; fotoOriginal = null; $('fotoPrevia').hidden = true; $('fotoArquivo').value = ''; $('fotoArquivoCam').value = ''; }
+function limparFoto() { fotoCanvas = null; fotoOriginal = null; fotoRecorte = null; $('fotoPrevia').hidden = true; $('fotoArquivo').value = ''; $('fotoArquivoCam').value = ''; }
+$('fotoTudo').addEventListener('click', () => { fotoRecorte = null; $('fotoSel').hidden = true; toast('Vou usar a foto inteira.'); });
+
+// arrastar para marcar só a conta
+(() => {
+  const area = document.querySelector('.foto-area'), sel = $('fotoSel');
+  let ini = null;
+  const pos = (e) => { const r = $('fotoImg').getBoundingClientRect(); return { x: Math.min(Math.max(e.clientX - r.left, 0), r.width), y: Math.min(Math.max(e.clientY - r.top, 0), r.height), r }; };
+  area.addEventListener('pointerdown', (e) => { if (!fotoCanvas) return; e.preventDefault(); area.setPointerCapture(e.pointerId); ini = pos(e); });
+  area.addEventListener('pointermove', (e) => {
+    if (!ini) return;
+    const p = pos(e);
+    const x = Math.min(ini.x, p.x), y = Math.min(ini.y, p.y), w = Math.abs(p.x - ini.x), h = Math.abs(p.y - ini.y);
+    Object.assign(sel.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
+    sel.hidden = false;
+    const k = fotoCanvas.width / p.r.width;
+    fotoRecorte = w > 12 && h > 12 ? { x: x * k, y: y * k, w: w * k, h: h * k } : null;
+  });
+  const fim = () => { ini = null; if (!fotoRecorte) sel.hidden = true; };
+  area.addEventListener('pointerup', fim);
+  area.addEventListener('pointercancel', fim);
+})();
 
 async function lerFoto() {
-  if (!fotoB64) { toast('Tire uma foto ou escolha uma imagem primeiro.'); return; }
-  if (!IA.online()) { toast('Sem internet: a leitura de foto precisa da IA.', true); return; }
-  if (!IA.iaConfigurada()) { toast('A IA ainda não foi configurada. Veja Configurações.', true); return; }
-  carregando('Lendo a foto e resolvendo…');
+  if (!fotoCanvas) { toast('Tire uma foto ou escolha uma imagem primeiro.'); return; }
+  let c = fotoCanvas;
+  if (fotoRecorte) {
+    const r = fotoRecorte;
+    c = document.createElement('canvas');
+    c.width = Math.max(1, Math.round(r.w)); c.height = Math.max(1, Math.round(r.h));
+    c.getContext('2d', { willReadFrequently: true }).drawImage(fotoCanvas, r.x, r.y, r.w, r.h, 0, 0, c.width, c.height);
+  }
+  carregando('Lendo a foto (no celular)…');
   try {
-    const d = await IA.resolverImagem(fotoB64, fotoMime, 'imagem');
-    mostrarResultadoIA(d, 'lido da foto');
-  } catch (e) { toast(e.message, true); }
+    const m = await leitor();
+    usarLeitura(await m.lerImagem(c), 'foto');
+  } catch (e) { console.error(e); toast(e.message || 'Não consegui ler a foto.', true); }
   finally { carregando(null); }
 }
 
@@ -446,12 +379,7 @@ async function ouvir() {
       } catch { /* tenta a próxima */ }
     }
     txt.innerHTML = `Ouvi: “${escapar(frases[0])}”`;
-    if (IA.online() && IA.iaConfigurada()) {
-      carregando('Entendendo a pergunta com a IA…');
-      try { mostrarResultadoIA(await IA.resolverTexto(frases[0]), 'entendido pela IA'); }
-      catch (e) { toast(e.message, true); }
-      finally { carregando(null); }
-    } else toast('Não consegui transformar a fala em conta. Tente falar mais devagar ou use o teclado.', true);
+    toast('Não consegui transformar a fala em conta. Tente falar mais devagar ou use o teclado.', true);
   } catch (e) {
     btn.classList.remove('ouvindo');
     if (!/cancel/i.test(String(e && e.message))) toast(e.message || 'Erro no microfone.', true);
@@ -464,7 +392,6 @@ function paraLatex(exp) {
     return latexDe(a);
   } catch { return exp; }
 }
-import { latex as latexDe } from './motor/ast.js';
 function escapar(s) { return String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
 
 // ---------- histórico ----------
@@ -495,30 +422,17 @@ $('histLimpar').addEventListener('click', () => { try { localStorage.removeItem(
 
 // ---------- configurações ----------
 $('btnConfig').addEventListener('click', () => {
-  const c = IA.config();
-  $('cfgNivel').value = c.nivel;
-  $('cfgAngulo').value = c.angulo;
-  $('cfgServidor').value = c.servidor;
-  $('cfgChave').value = c.chave;
-  $('cfgTesteRes').textContent = '';
+  $('cfgAngulo').value = lerConfig().angulo || 'graus';
   $('dlgConfig').showModal();
 });
 $('dlgConfig').addEventListener('close', () => {
   if ($('dlgConfig').returnValue !== 'ok') return;
-  IA.salvarConfig({ nivel: $('cfgNivel').value, angulo: $('cfgAngulo').value, servidor: $('cfgServidor').value.trim(), chave: $('cfgChave').value });
-  atualizarStatus();
+  salvarConfig({ angulo: $('cfgAngulo').value });
   toast('Configurações salvas.');
-});
-$('cfgTestar').addEventListener('click', async () => {
-  IA.salvarConfig({ servidor: $('cfgServidor').value.trim(), chave: $('cfgChave').value });
-  $('cfgTesteRes').textContent = 'Testando…';
-  $('cfgTesteRes').textContent = await IA.testar();
-  atualizarStatus();
 });
 $('versao').textContent = 'v' + VERSAO;
 
 // ---------- início ----------
-atualizarStatus();
 setTimeout(() => $('abertura').classList.add('some'), 650);
 setTimeout(() => $('abertura').remove(), 1300);
 if (!nativo && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {

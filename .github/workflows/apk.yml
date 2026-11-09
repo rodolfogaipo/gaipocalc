@@ -2,7 +2,7 @@ name: Gerar APK do GAIPO CALC
 on:
   push:
     branches: [main]
-    paths-ignore: ['servidor/**', '**.md']
+    paths-ignore: ['**.md']
   workflow_dispatch:
 permissions:
   contents: write
@@ -34,9 +34,6 @@ jobs:
           distribution: temurin
           java-version: 21
       - name: Montar e assinar o APK
-        env:
-          GAIPO_SERVIDOR: ${{ vars.GAIPO_SERVIDOR }}
-          GAIPO_CHAVE_APP: ${{ secrets.GAIPO_CHAVE_APP }}
         run: bash site/apk/montar.sh
       - uses: softprops/action-gh-release@v2
         with:

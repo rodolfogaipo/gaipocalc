@@ -1,0 +1,45 @@
+<!doctype html><meta charset="utf-8"><title>teste leitor</title><pre id="out">...</pre><div id="imgs"></div>
+<script type="module">
+import { lerTracos, lerImagem, imagemParaEntrada } from '../js/leitor.js';
+const out = document.getElementById('out');
+const arc = (cx, cy, r, a0, a1, n = 14) => Array.from({ length: n + 1 }, (_, i) => { const a = a0 + (a1 - a0) * i / n; return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) }; });
+const lin = (x0, y0, x1, y1, n = 8) => Array.from({ length: n + 1 }, (_, i) => ({ x: x0 + (x1 - x0) * i / n, y: y0 + (y1 - y0) * i / n }));
+const T = (pts) => ({ pts, esp: 4 });
+const G = {
+  '2': (o) => [T([...arc(o + 20, 35, 18, Math.PI * 1.1, Math.PI * 2.2), ...lin(o + 36, 45, o + 2, 90).slice(1), ...lin(o + 2, 90, o + 40, 90).slice(1)])],
+  '3': (o) => [T([...arc(o + 18, 32, 16, Math.PI * 1.2, Math.PI * 2.5), ...arc(o + 18, 70, 20, Math.PI * 1.5, Math.PI * 2.85).slice(1)])],
+  '7': (o) => [T([...lin(o, 15, o + 40, 15), ...lin(o + 40, 15, o + 15, 90).slice(1)])],
+  'x': (o) => [T(lin(o, 45, o + 32, 90)), T(lin(o + 32, 45, o, 90))],
+  '+': (o) => [T(lin(o, 60, o + 36, 60)), T(lin(o + 18, 42, o + 18, 78))],
+  '=': (o) => [T(lin(o, 52, o + 36, 52)), T(lin(o, 70, o + 36, 70))],
+  '5': (o) => [T([...lin(o + 36, 15, o + 4, 15), ...lin(o + 4, 15, o + 2, 48).slice(1), ...arc(o + 18, 68, 21, Math.PI * 1.3, Math.PI * 2.8).slice(1)])],
+};
+const escrever = (t) => { let o = 10, s = []; for (const c of t) { s.push(...G[c](o)); o += 55; } return s; };
+function foto(t, escala, ruido) {
+  const tr = escrever(t);
+  const c = document.createElement('canvas'); c.width = Math.round((t.length * 55 + 120) * escala); c.height = Math.round(260 * escala);
+  const x = c.getContext('2d');
+  const gr = x.createLinearGradient(0, 0, c.width, c.height); gr.addColorStop(0, '#f4f1e8'); gr.addColorStop(1, '#a9a69c'); x.fillStyle = gr; x.fillRect(0, 0, c.width, c.height);
+  x.strokeStyle = '#9db7e0'; x.lineWidth = 2 * escala; for (let y = 30; y < 260; y += 34) { x.beginPath(); x.moveTo(0, y * escala); x.lineTo(c.width, y * escala); x.stroke(); }
+  x.strokeStyle = '#1b2a6b'; x.lineCap = 'round'; x.lineJoin = 'round'; x.lineWidth = 3.2 * escala;
+  for (const s of tr) { x.beginPath(); s.pts.forEach((p, i) => (i ? x.lineTo : x.moveTo).call(x, (p.x + 50) * escala, (p.y + 75) * escala)); x.stroke(); }
+  const d = x.getImageData(0, 0, c.width, c.height);
+  for (let i = 0; i < d.data.length; i += 4) { const n = (Math.random() - 0.5) * ruido; d.data[i] += n; d.data[i + 1] += n; d.data[i + 2] += n; }
+  x.putImageData(d, 0, 0);
+  return c;
+}
+(async () => {
+  try {
+    const res = [];
+    for (const t of ['2+3=5', '2x+3=7']) res.push('caneta ' + t + ' -> ' + await lerTracos(escrever(t)));
+    for (const [t, e, r] of [['2x+3=7', 3, 30], ['2+3=5', 5, 50], ['7x=3', 2, 20]]) {
+      const c = foto(t, e, r);
+      const ent = imagemParaEntrada(c);
+      const v = document.createElement('canvas'); v.width = ent.width; v.height = ent.height; const vc = v.getContext('2d'); const im = vc.createImageData(ent.width, ent.height); ent.tensor.forEach((g, i) => { im.data[i*4] = im.data[i*4+1] = im.data[i*4+2] = g * 255; im.data[i*4+3] = 255; }); vc.putImageData(im, 0, 0);
+      document.getElementById('imgs').append(c, v); c.style.width = '400px';
+      res.push('foto ' + t + ' (' + c.width + 'x' + c.height + ') -> ' + await lerImagem(c));
+    }
+    out.textContent = res.join('\n');
+  } catch (e) { out.textContent = 'ERRO ' + e.message + '\n' + e.stack; }
+})();
+</script>

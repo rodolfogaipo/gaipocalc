@@ -1,0 +1,5 @@
+ONNX Runtime Web (onnxruntime-web 1.31.1)
+Copyright (c) Microsoft Corporation
+Licenciado sob a licença MIT: https://github.com/microsoft/onnxruntime/blob/main/LICENSE
+
+Modelo CoMER (ECCV 2022) via projeto ink-on: https://github.com/kimseungdae/ink-on

@@ -14,13 +14,9 @@ mkdir www
 for f in index.html manifest.webmanifest sw.js css js vendor img icons; do cp -r "$SITE/$f" www/; done
 test -f www/index.html || { echo "index.html não encontrado"; exit 1; }
 
-# Endereço do servidor da IA e código do app (configurados no GitHub)
-SERV="${GAIPO_SERVIDOR:-}"
-CHAVE="${GAIPO_CHAVE_APP:-}"
-SERV_ESC=$(printf '%s' "$SERV" | sed 's/[\/&]/\\&/g')
-CHAVE_ESC=$(printf '%s' "$CHAVE" | sed 's/[\/&]/\\&/g')
-sed -i "s/export const SERVIDOR_IA = '';/export const SERVIDOR_IA = '$SERV_ESC';/; s/export const CHAVE_APP = '';/export const CHAVE_APP = '$CHAVE_ESC';/; s/export const VERSAO = 'dev';/export const VERSAO = '1.$RUN';/" www/js/config.js
-if [ -n "$SERV" ]; then echo "Servidor da IA: $SERV"; else echo "::warning::GAIPO_SERVIDOR não configurado: a IA ficará desligada até configurar no app."; fi
+# Versão do app
+sed -i "s/export const VERSAO = 'dev';/export const VERSAO = '1.$RUN';/" www/js/config.js
+grep -q "1.$RUN" www/js/config.js
 
 cat > capacitor.config.json <<'JSON'
 {
@@ -51,7 +47,7 @@ for f in $(find $RES -name splash.png); do
   convert -size "$S" xc:'#F1F3F7' \( www/img/logo-gaipocalc.png -resize ${M}x${M} \) -gravity center -composite "$f"
 done
 
-# Permissões: câmera (foto da questão), microfone (voz), internet (IA)
+# Permissões: câmera (foto da questão) e microfone (voz)
 MAN=android/app/src/main/AndroidManifest.xml
 sed -i 's#</manifest>#    <uses-permission android:name="android.permission.CAMERA"/>\n    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-feature android:name="android.hardware.camera" android:required="false"/>\n    <uses-feature android:name="android.hardware.microphone" android:required="false"/>\n    <queries>\n        <intent><action android:name="android.speech.RecognitionService"/></intent>\n        <intent><action android:name="android.media.action.IMAGE_CAPTURE"/></intent>\n    </queries>\n</manifest>#' $MAN
 grep -c RECORD_AUDIO $MAN

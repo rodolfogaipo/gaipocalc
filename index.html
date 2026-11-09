@@ -22,7 +22,7 @@
     <div class="marca-txt"><b>GAIPO</b><span>CALC</span></div>
   </div>
   <div class="topo-acoes">
-    <span id="status" class="chip" title="Situação da conexão">offline</span>
+    <span class="chip on" title="Tudo funciona sem internet e sem custo">grátis · offline</span>
     <button id="btnHistorico" class="ico" aria-label="Histórico"><svg viewBox="0 0 24 24"><path d="M12 7v5l3 2M3.05 11a9 9 0 1 1 .5 4M3 4v5h5"/></svg></button>
     <button id="btnConfig" class="ico" aria-label="Configurações"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
   </div>
@@ -62,7 +62,7 @@
         <button id="canLimpar" class="sec">Limpar</button>
         <label class="espessura">Traço <input id="canEsp" type="range" min="2" max="9" value="4"></label>
       </div>
-      <p class="dica" id="dicaCaneta">Escreva como no caderno. A leitura da letra usa a IA e precisa de internet.</p>
+      <p class="dica" id="dicaCaneta">Escreva uma conta por vez, como no caderno. A leitura é feita no próprio celular, sem internet. Depois confira o que foi lido.</p>
     </div>
 
     <div class="painel" data-painel="foto" hidden>
@@ -72,8 +72,11 @@
         <input id="fotoArquivo" type="file" accept="image/*" hidden>
         <input id="fotoArquivoCam" type="file" accept="image/*" capture="environment" hidden>
       </div>
-      <div id="fotoPrevia" class="foto-previa" hidden><img id="fotoImg" alt="Foto da questão"><button id="fotoGirar" class="sec mini">Girar ↻</button></div>
-      <p class="dica">Enquadre só uma questão, com boa luz. A leitura da foto usa a IA e precisa de internet.</p>
+      <div id="fotoPrevia" class="foto-previa" hidden>
+        <div class="foto-area"><img id="fotoImg" alt="Foto da questão"><div id="fotoSel" class="foto-sel" hidden></div></div>
+        <div class="foto-barra"><button id="fotoGirar" class="sec mini">Girar ↻</button><button id="fotoTudo" class="sec mini">Usar foto inteira</button></div>
+      </div>
+      <p class="dica">Arraste o dedo sobre a foto para marcar só a conta. Funciona melhor com uma conta escrita à mão, com boa luz. A leitura é feita no celular, sem internet.</p>
     </div>
 
     <div class="painel" data-painel="voz" hidden>
@@ -97,13 +100,9 @@
     <div id="resAviso" class="aviso" hidden></div>
     <div class="res-acoes">
       <button id="btnPassos" class="primario sec-azul">Ver passo a passo</button>
-      <button id="btnIA" class="sec">Explicar com IA</button>
+      <button id="btnCopiar" class="sec">Copiar resposta</button>
     </div>
     <ol id="passos" class="passos" hidden></ol>
-    <div id="iaBloco" class="ia-bloco" hidden>
-      <h3>Explicação da IA</h3>
-      <div id="iaConteudo"></div>
-    </div>
   </section>
 
   <section id="carregando" class="cartao carregando" hidden><div class="spin"></div><span id="carregandoTxt">Pensando…</span></section>
@@ -112,18 +111,9 @@
 <dialog id="dlgConfig" class="dlg">
   <form method="dialog">
     <h2>Configurações</h2>
-    <label>Nível das explicações da IA
-      <select id="cfgNivel"><option value="fundamental">Ensino fundamental</option><option value="medio">Ensino médio</option><option value="faculdade">Faculdade</option></select>
-    </label>
     <label>Ângulos (seno, cosseno, tangente)
       <select id="cfgAngulo"><option value="graus">Graus (sen 30 = 1/2)</option><option value="rad">Radianos (sen π/6 = 1/2)</option></select>
     </label>
-    <details>
-      <summary>Servidor da IA (avançado)</summary>
-      <label>Endereço do servidor <input id="cfgServidor" type="url" placeholder="https://gaipocalc-ia.SEU-USUARIO.workers.dev" autocomplete="off"></label>
-      <label>Código do app <input id="cfgChave" type="password" autocomplete="off"></label>
-      <button type="button" id="cfgTestar" class="sec mini">Testar conexão</button> <span id="cfgTesteRes"></span>
-    </details>
     <div class="sobre">
       <img src="img/gaipo-g.png" alt="GAIPO">
       <div><b>GAIPO CALC</b> <span id="versao"></span><br><small>Desenvolvido por GAIPO Intelligent Engineering</small></div>
