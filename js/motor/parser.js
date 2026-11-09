@@ -219,6 +219,8 @@ class Parser {
       if (this.is('endsys')) this.next();
       return eqs.length === 1 ? eqs[0] : { t: 'sys', eqs };
     }
+    const fdef = this.tentarFuncao();
+    if (fdef) return fdef;
     const itens = [this.relacao()];
     while (this.is(';') || this.is('nl') || (this.is(',') && itens[0].t === 'eq')) {
       this.next();
@@ -232,6 +234,32 @@ class Parser {
     }
     if (itens.length > 1) return { t: 'sys', eqs: itens };
     return itens[0];
+  }
+
+  // f(x) = …  ou  F(x,y) = …
+  tentarFuncao() {
+    const ini = this.i;
+    const nome = this.peek();
+    if (!nome || nome.k !== 'id' || this.peek(1)?.k !== '(') return null;
+    let j = this.i + 2;
+    const vars = [];
+    for (;;) {
+      const t = this.t[j];
+      if (!t || t.k !== 'id' || t.v === 'e') return null;
+      vars.push(t.v);
+      j++;
+      if (this.t[j]?.k === ',' || this.t[j]?.k === ';') { j++; continue; }
+      if (this.t[j]?.k === ')') { j++; break; }
+      return null;
+    }
+    if (this.t[j]?.k !== 'rel' || this.t[j].v !== '=') return null;
+    if (vars.includes(nome.v) || new Set(vars).size !== vars.length || ['x', 'y', 'z', 't'].includes(nome.v) && vars.length === 1 && false) return null;
+    this.i = j + 1;
+    try {
+      const f = this.expr();
+      if (!this.fim()) { this.i = ini; return null; }
+      return { t: 'func', nome: nome.v, vars, f };
+    } catch (e) { this.i = ini; throw e; }
   }
 
   relacao() {

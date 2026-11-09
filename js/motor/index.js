@@ -8,6 +8,7 @@ import { resolverAritmetica } from './aritmetica.js';
 import { resolverEquacao, resolverSistema, latexConst } from './equacoes.js';
 import { derivarComPassos, integrarComPassos, limiteComPassos } from './calculo.js';
 import { ferramenta } from './ferramentas.js';
+import { analisarFuncao } from './funcoes.js';
 
 export { ErroMat, analisar };
 
@@ -15,7 +16,13 @@ export function resolver(entrada, opts = {}) {
   const ast = typeof entrada === 'string' ? analisar(entrada, opts) : entrada;
   let r;
   switch (ast.t) {
-    case 'eq': r = resolverEquacao(ast, opts); break;
+    case 'func': r = analisarFuncao(ast, opts); break;
+    case 'eq':
+      // y = 2x + 3  → função y de x
+      if (ast.op === '=' && ast.l.t === 'var' && !A.temVar(ast.r, ast.l.n) && A.temVar(ast.r) && !opts.var) {
+        r = analisarFuncao({ t: 'func', nome: ast.l.n, vars: [...A.variaveis(ast.r)].sort(), f: ast.r }, opts);
+      } else r = resolverEquacao(ast, opts);
+      break;
     case 'sys': r = resolverSistema(ast, opts); break;
     case 'deriv': r = derivarComPassos(ast.f, ast.v, ast.ordem); break;
     case 'int': r = integrarComPassos(ast, opts); break;

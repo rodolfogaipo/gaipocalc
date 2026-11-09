@@ -105,7 +105,7 @@ caso('x+y+z=6;x-y=0;2z=6', 'z=3');
 // derivadas
 caso('\\frac{d}{dx}x^3', '3x^{2}');
 caso('\\frac{d}{dx}\\left(x^2\\sin x\\right)', (r) => r.resposta.includes('\\cos') && r.resposta.includes('\\sin'));
-caso('\\frac{d}{dx}\\frac{x}{x+1}', '\\frac{1}{x^{2}+2x+1}');
+caso('\\frac{d}{dx}\\frac{x}{x+1}', '\\frac{1}{\\left(x+1\\right)^{2}}');
 caso('\\frac{d}{dx}e^{2x}', '2e^{2x}');
 caso('\\frac{d}{dx}\\ln(x^2+1)', '\\frac{2x}{x^{2}+1}');
 caso('\\frac{d}{dx}\\sqrt{x}', '\\frac{1}{2\\sqrt{x}}');
@@ -138,6 +138,14 @@ caso('\\lim_{x\\to0}\\frac{1}{x}', 'Não existe');
 caso('\\lim_{x\\to0^{+}}\\frac{1}{x}', '+\\infty');
 caso('\\lim_{x\\to\\infty}\\left(1+\\frac{1}{x}\\right)^x', '2{,}718');
 caso('\\lim_{x\\to0}\\frac{e^x-1}{x}', '1');
+// funções
+caso('F\\left(x,y\\right)=\\frac{x^2}{1-x^2-y^2}', (r) => r.resposta.includes('x^{2}+y^{2}\\ne 1') && r.resposta.includes('\\frac{\\partial F}{\\partial x}') && r.resposta.includes('\\frac{2x^{2}y}{\\left(1-x^{2}-y^{2}\\right)^{2}}'));
+caso('f(x)=x^2-5x+6', (r) => r.resposta.includes("f'(x)=2x-5") && r.resposta.includes('x=2'));
+caso('f(x)=\\frac{1}{x-2}', 'x\\ne 2');
+caso('g(x)=\\sqrt{x-1}', 'x\\ge 1');
+caso('y=2x+3', "y'(x)=2");
+caso('F(x,y)=x^2y+3xy^2', '\\frac{\\partial F}{\\partial y}=6xy+x^{2}');
+caso('x(x+1)=0', 'x=-1');
 // ferramentas
 caso('mmc(12,18)', '36');
 caso('mdc(12;18)', '6');

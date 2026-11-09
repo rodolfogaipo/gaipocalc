@@ -132,6 +132,7 @@ export function latex(n) {
       return `\\lim_{${n.v}\\to ${latex(n.to)}${lado}} ${prec(n.f) <= 2 ? paren(latex(n.f)) : latex(n.f)}`;
     }
     case 'call': return `\\operatorname{${n.n}}${paren(n.args.map(latex).join(';\\ '))}`;
+    case 'func': return `${n.nome}\\left(${n.vars.join(',')}\\right)=${latex(n.f)}`;
     case 'pm': return `${latex(n.l)}\\pm ${latex(n.r)}`;
     case 'raw': return n.s;
     default: throw new Error('latex: tipo desconhecido ' + n.t);

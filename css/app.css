@@ -76,7 +76,7 @@ main { max-width: 760px; margin: 0 auto; padding: 14px 16px; display: flex; flex
 .abas button.ativa svg { color: var(--blue2); }
 
 math-field {
-  display: block; width: 100%; min-height: 76px; font-size: 1.75rem; padding: 12px 14px;
+  display: block; width: 100%; min-height: 76px; font-size: 1.5rem; overflow-x: auto; padding: 12px 14px;
   background: var(--card2); color: var(--text); border: 1px solid var(--line); border-radius: 12px;
   --caret-color: #4c91ff; --selection-background-color: rgba(31, 111, 255, 0.35); --selection-color: #fff;
   --contains-highlight-background-color: rgba(31, 111, 255, 0.12); --placeholder-color: #4c91ff; --primary-color: #4c91ff;
@@ -130,6 +130,7 @@ math-field::part(menu-toggle) { display: none; }
 .res-questao small, .res-resposta small { display: block; color: var(--muted); font-size: 12px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
 .mat { overflow-x: auto; overflow-y: hidden; font-size: 1.15rem; padding: 2px 0; }
 .mat.grande { font-size: 1.6rem; color: #fff; }
+.mat.grande.multi { font-size: 1.12rem; line-height: 1.5; }
 .mat.conj { font-size: 1rem; color: var(--muted); margin-top: 6px; }
 .decimal { color: var(--blue2); margin-top: 4px; font-size: 15px; }
 .aviso { margin: 8px 0; padding: 10px 12px; border-radius: 10px; font-size: 14px; background: rgba(255, 181, 71, 0.1); border: 1px solid rgba(255, 181, 71, 0.35); color: #ffd79a; }

@@ -169,6 +169,7 @@ function mostrarResultado(r, origem) {
   $('resOrigem').className = 'origem ok';
   mat($('resQuestao'), r.entrada);
   mat($('resResposta'), r.resposta);
+  $('resResposta').classList.toggle('multi', /^\\begin\{array\}/.test(r.resposta) || r.resposta.length > 70);
   $('resDecimal').textContent = r.decimal ? r.decimal : '';
   mat($('resConjunto'), r.conjunto || '', false);
   const av = $('resAviso');

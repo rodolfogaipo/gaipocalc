@@ -36,11 +36,46 @@ export function derivarComPassos(f, v, ordem = 1) {
     if (ordem > 1) passos.push({ titulo: `Derivada de ordem ${k}`, texto: k === 1 ? 'Começamos pela primeira derivada.' : 'Derivamos de novo o resultado anterior.', latex: dd(v, atual) });
     const ctx = { v, passos, n: 0 };
     const d = D(atual, ctx);
-    const s = simp(d, v);
+    const s = simpDeriv(atual, d, v);
     if (L(s) !== L(limpar(d))) passos.push({ titulo: 'Simplificando', texto: 'Organizamos e juntamos os termos.', latex: `${ordem > 1 ? `f^{(${k})}` : `f'`}(${v})=${L(s)}` });
     atual = s;
   }
   return { tipo: 'derivada', titulo: ordem > 1 ? `Derivada de ordem ${ordem}` : 'Derivada', entrada: L({ t: 'deriv', f, v, ordem }), resposta: `${ordem === 1 ? "f'" : ordem === 2 ? "f''" : `f^{(${ordem})}`}(${v})=${L(atual)}`, respostaExpr: atual, passos };
+}
+
+// simplifica a derivada mantendo o formato de quociente: N / g²
+function simpDeriv(f, d, v) {
+  if (f.t === '/' && A.temVar(f.r, v)) {
+    try {
+      const df = derivar(f.l, v), dg = derivar(f.r, v);
+      const N = deAST(A.sub(A.mul(df, f.r), A.mul(f.l, dg)));
+      if (N.vazio) return A.num(0);
+      return A.dvd(emEvidencia(N, v), A.pow(f.r, A.num(2)));
+    } catch (e) { if (!(e instanceof ErroMat)) throw e; }
+  }
+  return simp(d, v);
+}
+
+// coloca o fator comum em evidência: -2xy² + 2x → -2x(y² - 1)
+export function emEvidencia(p, v) {
+  const ts = p.termos;
+  if (ts.length < 2 || p.temDenominador()) return p.toAST(v);
+  let g = 0n;
+  const mdc = (a, b) => { a = a < 0n ? -a : a; b = b < 0n ? -b : b; while (b) [a, b] = [b, a % b]; return a; };
+  for (const t of ts) { if (!t.c.isInt) return p.toAST(v); g = mdc(g, t.c.n); }
+  const exps = new Map();
+  ts[0].m.forEach(([k, e]) => exps.set(k, e));
+  for (const t of ts.slice(1)) {
+    const m = new Map(t.m);
+    for (const [k, e] of [...exps]) { if (!m.has(k)) exps.delete(k); else if (m.get(k).cmp(e) < 0) exps.set(k, m.get(k)); }
+  }
+  for (const [k, e] of [...exps]) if (!e.isInt || e.isNeg || k.startsWith('n:')) exps.delete(k);
+  let fator = P.mono([...exps]).mulQ(new Q(g));
+  let resto = p.div(fator);
+  if (resto.ordenados(v)[0]?.c.isNeg) { fator = fator.neg(); resto = resto.neg(); }
+  if (fator.eQ && fator.q.isOne) return p.toAST(v);
+  if (fator.eQ && fator.q.eq(-1)) return A.neg(resto.toAST(v));
+  return A.mul(fator.toAST(v), resto.toAST(v), true);
 }
 
 export function derivar(f, v) { return simp(D(f, { v, passos: null, n: 0 }), v); }
@@ -91,9 +126,10 @@ function D(n, ctx) {
       }
       if (!A.temVar(n.l, v)) {
         // c/g → -c·g'/g²
+        const ps = pos0(ctx);
         const dg = D(n.r, ctx);
         const r = A.neg(A.dvd(A.mul(n.l, simp(dg, v)), A.pow(n.r, A.num(2))));
-        reg(ctx, 'Regra do quociente', "(c/g)' = −c·g'/g²", n, r);
+        reg(ctx, 'Regra do quociente', `(c/g)' = −c·g'/g², com c = ${L(n.l)} constante e g = ${L(n.r)}.`, n, r, ps);
         return r;
       }
       const ps = pos0(ctx);

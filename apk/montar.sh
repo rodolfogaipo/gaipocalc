@@ -32,12 +32,20 @@ npx cap add android
 npx cap sync android
 RES=android/app/src/main/res
 
-# Ícone
-rm -rf $RES/mipmap-anydpi-v26
-for d in $RES/mipmap-*; do
-  cp www/icons/icon-512.png $d/ic_launcher.png
-  cp www/icons/icon-512.png $d/ic_launcher_round.png
-  rm -f $d/ic_launcher_foreground.png
+# Ícone: símbolo sem fundo (ícone adaptativo com fundo transparente + versões antigas)
+for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+  mkdir -p $RES/mipmap-$d
+  cp "$SITE/icons/android/mipmap-$d/"*.png $RES/mipmap-$d/
+done
+mkdir -p $RES/mipmap-anydpi-v26
+for n in ic_launcher ic_launcher_round; do
+cat > $RES/mipmap-anydpi-v26/$n.xml <<'XML'
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@android:color/transparent"/>
+    <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+</adaptive-icon>
+XML
 done
 
 # Tela de abertura clara com a logo (igual à do app)
