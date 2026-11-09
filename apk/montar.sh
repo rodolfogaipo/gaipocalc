@@ -23,7 +23,7 @@ cat > capacitor.config.json <<'JSON'
   "appId": "com.gaipo.calc",
   "appName": "GAIPO CALC",
   "webDir": "www",
-  "backgroundColor": "#070B14",
+  "backgroundColor": "#F4F6FB",
   "android": { "adjustMarginsForEdgeToEdge": "force" }
 }
 JSON
@@ -60,8 +60,8 @@ MAN=android/app/src/main/AndroidManifest.xml
 sed -i 's#</manifest>#    <uses-permission android:name="android.permission.CAMERA"/>\n    <uses-permission android:name="android.permission.RECORD_AUDIO"/>\n    <uses-feature android:name="android.hardware.camera" android:required="false"/>\n    <uses-feature android:name="android.hardware.microphone" android:required="false"/>\n    <queries>\n        <intent><action android:name="android.speech.RecognitionService"/></intent>\n        <intent><action android:name="android.media.action.IMAGE_CAPTURE"/></intent>\n    </queries>\n</manifest>#' $MAN
 grep -c RECORD_AUDIO $MAN
 
-# Barras do sistema escuras
-sed -i 's#<item name="android:background">@null</item>#<item name="android:background">@null</item><item name="android:statusBarColor">\#070B14</item><item name="android:navigationBarColor">\#070B14</item><item name="android:windowLightStatusBar">false</item><item name="android:forceDarkAllowed">false</item>#' $RES/values/styles.xml
+# Barras do sistema claras (combinam com o app)
+sed -i 's#<item name="android:background">@null</item>#<item name="android:background">@null</item><item name="android:statusBarColor">\#F4F6FB</item><item name="android:navigationBarColor">\#F4F6FB</item><item name="android:windowLightStatusBar">true</item><item name="android:windowLightNavigationBar">true</item><item name="android:forceDarkAllowed">false</item>#' $RES/values/styles.xml
 
 # Versão
 sed -i "s/versionCode 1/versionCode $RUN/; s/versionName \"1.0\"/versionName \"1.$RUN\"/" android/app/build.gradle

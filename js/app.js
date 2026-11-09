@@ -60,7 +60,7 @@ function configurarTeclado() {
 let aba = 'teclado';
 let ultimo = null; // último resultado mostrado
 let fotoCanvas = null, fotoRot = 0, fotoOriginal = null, fotoRecorte = null;
-const caneta = new Caneta($('papel'));
+const caneta = new Caneta($('papel'), $('folha'));
 caneta.onMudou = () => {};
 
 // ---------- utilidades de tela ----------
@@ -114,9 +114,21 @@ $('btnLimparTudo').addEventListener('click', () => {
   else if (aba === 'foto') limparFoto();
   else { mf.value = ''; mf.focus(); }
   $('resultado').hidden = true;
+  $('exemplos').hidden = false;
 });
 $('canDesfazer').addEventListener('click', () => caneta.desfazer());
 $('canLimpar').addEventListener('click', () => caneta.limpar());
+$('cheiaDesfazer').addEventListener('click', () => caneta.desfazer());
+$('cheiaLimpar').addEventListener('click', () => caneta.limpar());
+function telaCheia(sim) {
+  $('canetaCaixa').classList.toggle('cheia', sim);
+  document.body.style.overflow = sim ? 'hidden' : '';
+  requestAnimationFrame(() => caneta.ajustar());
+}
+$('canCheia').addEventListener('click', () => telaCheia(true));
+$('cheiaFechar').addEventListener('click', () => telaCheia(false));
+$('cheiaLer').addEventListener('click', () => { telaCheia(false); lerCaneta(); });
+window.addEventListener('popstate', () => telaCheia(false));
 $('canEsp').addEventListener('input', (e) => (caneta.esp = Number(e.target.value)));
 
 async function resolverAtual() {
@@ -142,6 +154,7 @@ function resolverLatex(latex, origem = 'aparelho') {
 }
 
 function mostrarFalha(latex, msg) {
+  $('exemplos').hidden = true;
   ultimo = { latex, resposta: '', passos: [], local: null };
   $('resultado').hidden = false;
   $('resTipo').textContent = 'Não resolvido offline';
@@ -162,6 +175,7 @@ function mostrarFalha(latex, msg) {
 }
 
 function mostrarResultado(r, origem) {
+  $('exemplos').hidden = true;
   ultimo = { latex: r.entrada, resposta: r.resposta, passos: r.passos, local: r };
   $('resultado').hidden = false;
   $('resTipo').textContent = r.titulo || 'Resultado';
@@ -240,7 +254,7 @@ async function lerCaneta() {
   carregando('Lendo sua letra (no celular)…');
   try {
     const m = await leitor();
-    usarLeitura(await m.lerTracos(caneta.tracos), 'caneta');
+    usarLeitura(await m.lerTracos(caneta.ultimaConta()), 'caneta');
   } catch (e) { console.error(e); toast(e.message || 'Não consegui ler a escrita.', true); }
   finally { carregando(null); }
 }
@@ -433,6 +447,26 @@ $('dlgConfig').addEventListener('close', () => {
 });
 $('versao').textContent = 'v' + VERSAO;
 
+// ---------- exemplos para experimentar ----------
+const EXEMPLOS = [
+  ['Equação do 2º grau', 'x^2-5x+6=0', 'c1'],
+  ['Frações', '\\frac{1}{2}+\\frac{2}{3}', 'c3'],
+  ['Derivada', '\\frac{d}{dx}\\left(x^2\\sin x\\right)', 'c2'],
+  ['Integral', '\\int_{0}^{1}x^2\\,dx', 'c4'],
+  ['Sistema', '\\begin{cases}x+y=5\\\\x-y=1\\end{cases}', 'c2'],
+  ['Porcentagem', '20\\%\\cdot 150', 'c3'],
+  ['Função de 2 variáveis', 'F\\left(x,y\\right)=\\frac{x^2}{1-x^2-y^2}', 'c1'],
+  ['Limite', '\\lim_{x\\to0}\\frac{\\sin x}{x}', 'c4'],
+];
+for (const [rot, lt, cor] of EXEMPLOS) {
+  const b = document.createElement('button');
+  b.className = 'ex ' + cor;
+  const s1 = document.createElement('small'); s1.textContent = rot; b.append(s1);
+  const m = document.createElement('div'); m.className = 'mat'; mat(m, lt, false); b.append(m);
+  b.addEventListener('click', () => { trocarAba('teclado'); mf.value = lt; resolverLatex(lt); });
+  $('exGrade').append(b);
+}
+
 // ---------- início ----------
 setTimeout(() => $('abertura').classList.add('some'), 650);
 setTimeout(() => $('abertura').remove(), 1300);
@@ -440,3 +474,4 @@ if (!nativo && 'serviceWorker' in navigator && (location.protocol === 'https:' |
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 window.__gaipo = { resolverLatex, mf };
+window.__gaipoCaneta = caneta;

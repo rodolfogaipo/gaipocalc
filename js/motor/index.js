@@ -51,7 +51,7 @@ function simplificar(ast, opts) {
   // fatoração de 2º grau, se der
   const extra = fatorarQuadratica(p, v);
   if (extra) passos.push(extra);
-  return { tipo: 'expressao', titulo: 'Simplificação', entrada: ent, resposta: res, passos, dica: vs.length === 1 ? `Para achar quando é zero, escreva “${ent}=0”.` : null };
+  return { tipo: 'expressao', titulo: 'Simplificação', entrada: ent, resposta: res, passos, dica: null };
 }
 
 function temProdutoDeSomas(n) {

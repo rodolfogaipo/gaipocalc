@@ -35,6 +35,9 @@ export function falaParaExpressao(frase) {
   let s = ' ' + tirarAcento(String(frase).toLowerCase()) + ' ';
   s = s.replace(/[?!.]/g, ' ').replace(/×/g, '*').replace(/÷/g, '/').replace(/−/g, '-');
   s = s.replace(/(\d)\s*,\s*(\d)/g, '$1,$2');
+  // "2 x 4" falado = 2 vezes 4 (x entre dois números é multiplicação)
+  for (let k = 0; k < 3; k++) s = s.replace(/(\d)\s*(?:x|xis)\s*(?=\d|(?:um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|treze|quatorze|catorze|quinze|dezesseis|dezessete|dezoito|dezenove|vinte|trinta|quarenta|cinquenta|sessenta|setenta|oitenta|noventa|cem|cento|mil|zero)\b)/g, '$1 * ');
+  s = s.replace(/\b(um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez|vinte|trinta|cem|mil)\s+(?:x|xis)\s+(?=\d|(?:um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez|vinte|trinta|cem|mil)\b)/g, '$1 vezes ');
   // limpa palavras de comando no começo
   for (const l of ['quanto e', 'quanto da', 'calcule', 'calcular', 'resolva', 'resolver', 'qual e', 'qual o resultado de', 'o resultado de', 'determine', 'encontre', 'ache']) s = s.replace(new RegExp('^\\s*' + l + '\\s'), ' ');
   s = s.replace(/\s(a equacao|equacao|a expressao|expressao)\s/g, ' ');
