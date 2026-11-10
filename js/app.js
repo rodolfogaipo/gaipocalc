@@ -346,7 +346,7 @@ function prepararFoto() {
     $('fotoImg').src = c.toDataURL('image/jpeg', 0.85);
     $('fotoVazia').hidden = true;
     $('fotoPrevia').hidden = false;
-    toast('Arraste o dedo sobre a conta para marcar só ela.');
+    toast('Toque em Resolver. Se tiver mais de uma conta, arraste o dedo sobre a que você quer.');
   };
   img.onerror = () => toast('Não consegui abrir essa imagem.', true);
   img.src = fotoOriginal;
@@ -381,7 +381,10 @@ async function lerFoto() {
   if (!fotoCanvas) { toast('Tire uma foto primeiro.'); return; }
   let c = fotoCanvas;
   if (fotoRecorte) {
-    const r = fotoRecorte;
+    // margem em volta do recorte, para não cortar pedaços da conta
+    const m = Math.max(fotoRecorte.w, fotoRecorte.h) * 0.08;
+    const x = Math.max(0, fotoRecorte.x - m), y = Math.max(0, fotoRecorte.y - m);
+    const r = { x, y, w: Math.min(fotoCanvas.width - x, fotoRecorte.w + 2 * m), h: Math.min(fotoCanvas.height - y, fotoRecorte.h + 2 * m) };
     c = document.createElement('canvas');
     c.width = Math.max(1, Math.round(r.w)); c.height = Math.max(1, Math.round(r.h));
     c.getContext('2d', { willReadFrequently: true }).drawImage(fotoCanvas, r.x, r.y, r.w, r.h, 0, 0, c.width, c.height);
