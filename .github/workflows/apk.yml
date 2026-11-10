@@ -2,7 +2,7 @@ name: Gerar APK do GAIPO CALC
 on:
   push:
     branches: [main]
-    paths-ignore: ['**.md']
+    paths-ignore: ['**.md', 'divulgacao/**']
   workflow_dispatch:
 permissions:
   contents: write
