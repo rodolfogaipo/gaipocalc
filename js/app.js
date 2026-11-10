@@ -164,8 +164,13 @@ function resolverLatex(latex, origem = '✓ calculado no aparelho') {
 }
 
 // ---------- tela da solução ----------
+// a última tela aberta fica sempre por cima (solução ↔ ferramenta ↔ gráfico)
+let zTopo = 40;
+export function trazerParaFrente(el) { el.style.zIndex = String(++zTopo); }
+window.__trazerParaFrente = trazerParaFrente;
 function abrirSolucao() {
   $('solucao').hidden = false;
+  trazerParaFrente($('solucao'));
   $('solucao').querySelector('.sol-corpo').scrollTop = 0;
   kb?.hide({ animate: false });
   if (!history.state?.sol) history.pushState({ sol: 1 }, '');
@@ -176,9 +181,13 @@ function fecharSolucao() {
 }
 $('solVoltar').addEventListener('click', () => (history.state?.sol ? history.back() : fecharSolucao()));
 $('solEditar').addEventListener('click', () => { if (history.state?.sol) history.back(); else fecharSolucao(); trocarAba('teclado'); });
+// voltar (inclusive o botão do Android) fecha só a tela que está por cima
 window.addEventListener('popstate', () => {
-  if (!$('solucao').hidden) fecharSolucao();
-  if ($('canetaCaixa').classList.contains('cheia')) telaCheia(false, true);
+  if ($('canetaCaixa').classList.contains('cheia')) { telaCheia(false, true); return; }
+  const abertas = [$('solucao'), $('ferramenta')].filter((e) => !e.hidden);
+  if (!abertas.length) return;
+  const topo = abertas.sort((a, b) => Number(b.style.zIndex || 0) - Number(a.style.zIndex || 0))[0];
+  if (topo.id === 'solucao') fecharSolucao(); else topo.hidden = true;
 });
 
 function mostrarFalha(latex, msg, origem = '') {

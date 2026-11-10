@@ -39,8 +39,7 @@ export function iniciarFerramentas(a) {
     b.addEventListener('click', () => abrir(f.id));
     g.append(b);
   }
-  $('ferVoltar').addEventListener('click', () => (history.state?.ferr ? history.back() : fechar()));
-  window.addEventListener('popstate', () => { if (!$('ferramenta').hidden && !history.state?.ferr && $('solucao').hidden) fechar(); });
+  $('ferVoltar').addEventListener('click', () => history.back());
 }
 
 function fechar() { $('ferramenta').hidden = true; }
@@ -51,7 +50,8 @@ export function abrir(id, dados) {
   const corpo = $('ferCorpo');
   corpo.innerHTML = '';
   $('ferramenta').hidden = false;
-  if (!history.state?.ferr) history.pushState({ ferr: 1 }, '');
+  window.__trazerParaFrente?.($('ferramenta'));
+  history.pushState({ ferr: 1 }, '');
   MONTAR[id](corpo, dados);
   corpo.scrollTop = 0;
 }

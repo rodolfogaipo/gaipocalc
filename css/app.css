@@ -212,7 +212,7 @@ math-field::part(menu-toggle), math-field::part(virtual-keyboard-toggle) { displ
 .form-ferr textarea { min-height: 110px; resize: vertical; font-family: inherit; }
 .form-ferr input:focus, .form-ferr select:focus, .form-ferr textarea:focus { outline: 2px solid var(--azul); background: #fff; }
 .form-ferr .dica-f { font-size: 13px; color: var(--suave); margin: -4px 0 0; }
-.linha-campos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.linha-campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .seg { display: flex; gap: 6px; flex-wrap: wrap; }
 .seg button { flex: 1; min-width: 30%; border: 1px solid var(--linha); background: var(--sup2); border-radius: 12px; padding: 10px 8px; font-weight: 700; font-size: 14px; }
 .seg button.on { background: var(--azul-cl); border-color: var(--azul); color: var(--azul-esc); }
@@ -297,3 +297,15 @@ math-field::part(menu-toggle), math-field::part(virtual-keyboard-toggle) { displ
 .pdf-passos details > summary { display: none; }
 .pdf-rodape { margin-top: 26px; padding-top: 10px; border-top: 1px solid #e3e7f0; color: #8b94aa; font-size: 12px; text-align: center; }
 #solucao { z-index: 32; }
+
+/* nada passa da largura da tela (é um app, não rola para o lado) */
+.sol-corpo, .mais, .tela, .solucao { overflow-x: hidden; }
+.form-ferr, .graf-tela, .grade-ferr { max-width: 100%; min-width: 0; }
+.form-ferr label, .linha-campos > * { min-width: 0; }
+.form-ferr input, .form-ferr select, .form-ferr textarea { width: 100%; min-width: 0; max-width: 100%; box-sizing: border-box; }
+.grade-mat input { width: 100%; min-width: 0; }
+.seg button { min-width: 0; }
+.grade-ferr { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sol-corpo .mat { max-width: 100%; }
+.sol-corpo, .mais { touch-action: pan-y; overscroll-behavior-x: none; }
+.sol-corpo .mat, .alt, .opcao-leitura { touch-action: pan-x pan-y; }
