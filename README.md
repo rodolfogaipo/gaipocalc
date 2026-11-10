@@ -12,6 +12,10 @@ Desenvolvido por **GAIPO Intelligent Engineering**.
 | 📷 Foto da conta (marque a conta arrastando o dedo) | mesmo leitor, com limpeza da foto (sombra, linhas do caderno) |
 | 🎤 Voz (“dois x mais três igual a sete”) | reconhecimento de voz do próprio Android + tradutor de fala para conta |
 | 📚 Passo a passo | explicação em português de cada etapa |
+| 📈 Gráficos | várias funções, zoom com dois dedos, toque para ver o valor, raízes e vértice marcados |
+| 📊 Estatística | média, mediana, moda, variância, desvio padrão, quartis, histograma e gráfico de caixa |
+| 🧰 Ferramentas | porcentagem, regra de três, juros simples/compostos, combinatória, matrizes, geometria, conversões |
+| 📄 PDF | exporta a solução (questão, resposta, gráfico e passo a passo) para salvar ou compartilhar |
 
 O que é lido pela caneta, foto ou voz aparece no teclado para você **conferir e corrigir** antes de confiar no resultado.
 
@@ -20,7 +24,9 @@ porcentagem, fatorial, trigonometria (ângulos notáveis), logaritmos, simplific
 equações do 1º e 2º grau (Bhaskara), polinomiais (Briot-Ruffini), exponenciais, logarítmicas,
 modulares e irracionais, inequações (estudo do sinal), sistemas lineares, MMC/MDC/fatoração em
 primos, derivadas (todas as regras), integrais (tabela, substituição, por partes, definidas) e
-limites (fatoração, L'Hôpital, infinito).
+limites (fatoração, L'Hôpital, infinito), funções (domínio, derivadas parciais, parábola com
+vértice e imagem) e estatística (`media(4; 7; 7; 10)`, `mediana(…)`, `moda(…)`, `desvio(…)`,
+`comb(5; 2)`, `arranjo(5; 2)`, `perm(4)`).
 
 ## Como gerar o APK
 
@@ -43,4 +49,5 @@ testes/                        testes do motor: node testes/motor.test.mjs
 ## Licenças de terceiros
 
 MathLive (MIT) — `vendor/mathlive/LICENSE.txt`; nerdamer (Apache-2.0) — `vendor/nerdamer-LICENSE.md`;
-ink-on (Apache-2.0) — `vendor/tinta/LICENSE-ink-on.txt`; ONNX Runtime Web (MIT) — `vendor/tinta/LICENSE-onnxruntime.txt`.
+ink-on (Apache-2.0) — `vendor/tinta/LICENSE-ink-on.txt`; jsPDF e html2canvas (MIT) — `vendor/pdf/`;
+fonte Nunito (OFL) — `vendor/fonte/`; ONNX Runtime Web (MIT) — `vendor/tinta/LICENSE-onnxruntime.txt`.

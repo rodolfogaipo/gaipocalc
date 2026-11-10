@@ -147,6 +147,18 @@ caso('g(x)=\\sqrt{x-1}', 'x\\ge 1');
 caso('y=2x+3', "y'(x)=2");
 caso('F(x,y)=x^2y+3xy^2', '\\frac{\\partial F}{\\partial y}=6xy+x^{2}');
 caso('x(x+1)=0', 'x=-1');
+// estatística
+caso('media(4;7;7;10)', '\\bar{x}=7');
+caso('mediana(3;1;4;1;5;9;2;6)', 'Md=3{,}5');
+caso('moda(1;2;2;3;3;4)', 'Mo=2;\\ 3');
+caso('desvio(2;4;4;4;5;5;7;9)', '\\sigma=2');
+caso('media(2,5; 3; 4,5)', '\\frac{10}{3}');
+caso('comb(5;2)', '10');
+caso('arranjo(5;2)', '20');
+caso('perm(4)', '24');
+// parábola
+caso('f(x)=x^2-4x+3', 'V=\\left(2;\\ -1\\right)');
+caso('y=-x^2+2x+3', 'V=\\left(1;\\ 4\\right)');
 // ferramentas
 caso('mmc(12,18)', '36');
 caso('mdc(12;18)', '6');
@@ -156,5 +168,32 @@ caso('fatorar(97)', 'primo');
 caso('2+', 'ERRO');
 caso('(2+3', 'ERRO');
 caso('\\placeholder{}+1', 'ERRO');
+// ferramentas extras (chamadas diretas)
+{
+  const X = await import('../js/motor/extras.js');
+  const { Q } = await import('../js/motor/racional.js');
+  const ok = (nome, cond) => { total++; if (!cond) { falhas++; console.log('✗', nome); } else if (process.env.V) console.log('✓', nome); };
+  const q = (x) => Q.fromDecimal(String(x));
+  ok('20% de 150', X.porcentagem('de', q(20), q(150)).resposta === '30');
+  ok('30 é quanto % de 120', X.porcentagem('quanto', q(30), q(120)).resposta === '25\\%');
+  ok('aumento 10% de 200', X.porcentagem('aumento', q(10), q(200)).resposta === '220');
+  ok('desconto 15% de 80', X.porcentagem('desconto', q(15), q(80)).resposta === '68');
+  ok('regra de 3 direta', X.regraDeTres(q(3), q(12), q(5), false).resposta === 'x=20');
+  ok('regra de 3 inversa', X.regraDeTres(q(4), q(6), q(8), true).resposta === 'x=3');
+  ok('juros simples', X.juros('simples', 1000, 2, 12).resposta.includes('J=R\\$\\,240{,}00'));
+  ok('juros compostos', X.juros('compostos', 1000, 2, 12).resposta.includes('M=R\\$\\,1.268{,}24'));
+  const M = (l) => l.map((r) => r.map(q));
+  ok('det 2x2', X.matrizes('det', M([[1, 2], [3, 4]])).resposta === '\\det=-2');
+  ok('det 3x3', X.matrizes('det', M([[2, 1, 3], [1, 3, 2], [3, 2, 1]])).resposta === '\\det=-18');
+  ok('det 4x4', X.matrizes('det', M([[1, 0, 2, -1], [3, 0, 0, 5], [2, 1, 4, -3], [1, 0, 5, 0]])).resposta === '\\det=30');
+  ok('inversa 2x2', X.matrizes('inversa', M([[4, 7], [2, 6]])).resposta.includes('0{,}6 & -0{,}7'));
+  ok('produto', X.matrizes('mult', M([[1, 2], [3, 4]]), M([[5, 6], [7, 8]])).resposta.includes('19 & 22'));
+  ok('área círculo r=2', X.geometria('circulo', { r: 2 }).resposta.startsWith('12{,}566'));
+  ok('pitágoras 3-4', X.geometria('pitagoras', { a: 3, b: 4, c: NaN }).resposta === 'c\\approx 5');
+  ok('volume esfera', X.geometria('esfera', { r: 3 }).resposta.startsWith('113{,}097'));
+  ok('2,5 km em m', X.converter('comprimento', 2.5, 'km', 'm').resposta.startsWith('2500'));
+  ok('100 °C em °F', X.converter('temperatura', 100, '°C', '°F').resposta.startsWith('212'));
+  ok('72 km/h em m/s', X.converter('velocidade', 72, 'km/h', 'm/s').resposta.startsWith('20'));
+}
 console.log(`\n${total - falhas}/${total} testes passaram${cas ? '' : ' (sem nerdamer)'}`);
 process.exit(falhas ? 1 : 0);

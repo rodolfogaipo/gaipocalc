@@ -6,6 +6,8 @@ import { latex as latexDe, temVar } from './motor/ast.js';
 import { falaParaExpressao } from './voz.js';
 import { Caneta } from './caneta.js';
 import { VERSAO } from './config.js';
+import { iniciarFerramentas, abrir as abrirFerramenta } from './ferramentas-ui.js';
+import { GraficoFuncoes, desenharEstatistica, desenharBarras } from './grafico.js';
 
 // leitor de letra à mão: carregado só quando precisa (é pesado)
 let leitorMod = null;
@@ -111,6 +113,7 @@ function trocarAba(nova) {
   document.querySelectorAll('.navbar button').forEach((b) => b.classList.toggle('ativa', b.dataset.aba === nova));
   document.querySelectorAll('.tela').forEach((p) => (p.hidden = p.dataset.tela !== nova));
   if (nova === 'teclado') mostrarTeclado(); else kb?.hide({ animate: false });
+  if (nova === 'mais') document.activeElement?.blur?.();
   if (nova === 'caneta') requestAnimationFrame(() => caneta.ajustar());
   if (nova === 'caneta' || nova === 'foto') leitor().then((m) => m.preparar()).catch(() => {});
 }
@@ -192,6 +195,7 @@ function mostrarFalha(latex, msg, origem = '') {
   $('passos').hidden = true;
   mostrarAlternativas(ultimo.origem || '');
   abrirSolucao();
+  desenharGraficoSolucao(null);
 }
 
 function mostrarSolucao(r, origem) {
@@ -215,7 +219,29 @@ function mostrarSolucao(r, origem) {
   $('passos').hidden = true;
   salvarHistorico(r.entrada, r.resposta, r.titulo);
   mostrarAlternativas(origem);
+  ultimo.resultado = r;
   abrirSolucao();
+  desenharGraficoSolucao(r.grafico);
+}
+
+let graficoSol = null;
+function desenharGraficoSolucao(g) {
+  const box = $('solGrafico'), cv = $('cvSol');
+  box.hidden = !g;
+  $('solAbrirGrafico').hidden = !(g && g.tipo === 'funcoes');
+  if (!g) return;
+  requestAnimationFrame(() => {
+    if (g.tipo === 'funcoes') {
+      graficoSol ||= new GraficoFuncoes(cv);
+      graficoSol.definir(g.funcoes, g.marcas || []);
+      $('solAbrirGrafico').onclick = () => abrirFerramenta('graficos', { funcoes: g.funcoes.map((f) => textoDaFuncao(f.ast)) });
+    } else if (g.tipo === 'estatistica') desenharEstatistica(cv, g);
+    else if (g.tipo === 'barras') desenharBarras(cv, g);
+  });
+}
+// AST → texto simples para o campo do gráfico
+function textoDaFuncao(a) {
+  return latexDe(a).replace(/\\left|\\right/g, '').replace(/\\cdot/g, '*').replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g, '($1)/($2)').replace(/\\sqrt\{([^{}]*)\}/g, 'sqrt($1)').replace(/\\sin/g, 'sen').replace(/\\cos/g, 'cos').replace(/\\tan/g, 'tg').replace(/\\ln/g, 'ln').replace(/\\pi/g, 'pi').replace(/[{}]/g, (c) => (c === '{' ? '(' : ')')).replace(/\s+/g, '');
 }
 
 function mostrarAlternativas(origem) {
@@ -562,6 +588,36 @@ for (const [rot, lt] of EXEMPLOS) {
   $('exGrade').append(b);
 }
 
+// ---------- PDF ----------
+$('btnPdf').addEventListener('click', async () => {
+  if (!ultimo) return;
+  carregando('Gerando o PDF…');
+  try {
+    const { exportarPDF } = await import('./pdf.js');
+    const r = ultimo.resultado;
+    const passos = $('passos').cloneNode(true);
+    passos.querySelectorAll('details').forEach((d) => (d.open = true));
+    const cv = $('cvSol');
+    const temGraf = !$('solGrafico').hidden && cv.width > 0;
+    const como = await exportarPDF({
+      titulo: r?.titulo, tipo: $('resTipo').textContent,
+      questaoHTML: $('resQuestao').innerHTML, respostaHTML: $('resResposta').innerHTML,
+      decimal: $('resDecimal').textContent, conjuntoHTML: $('resConjunto').innerHTML,
+      aviso: $('resAviso').hidden ? '' : $('resAviso').textContent,
+      passosHTML: passos.innerHTML, graficoURL: temGraf ? cv.toDataURL('image/png') : '',
+    });
+    if (como === 'baixado') toast('PDF salvo nos downloads.');
+  } catch (e) { console.error(e); if (!/cancel/i.test(String(e?.message))) toast('Não consegui gerar o PDF: ' + (e.message || e), true); }
+  finally { carregando(null); }
+});
+
+// ---------- ferramentas (aba Mais) ----------
+iniciarFerramentas({
+  mostrarSolucao: (r, origem) => mostrarSolucao(r, origem),
+  toast,
+  resolverTexto: (t) => { const a = analisar(t); const lt = latexDe(a); mf.value = lt; atualizarPrevia(); resolverLatex(lt); },
+});
+
 // ---------- início ----------
 orientacao('portrait');
 trocarAba('teclado');
@@ -570,5 +626,5 @@ setTimeout(() => { $('abertura').remove(); if (aba === 'teclado') mostrarTeclado
 if (!nativo && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
-window.__gaipo = { resolverLatex, mf };
+window.__gaipo = { resolverLatex, mf, abrirFerramenta };
 window.__gaipoCaneta = caneta;

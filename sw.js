@@ -1,5 +1,5 @@
 // Funciona offline no navegador (PWA). No APK os arquivos já estão dentro do app.
-const CACHE = 'gaipocalc-v2';
+const CACHE = 'gaipocalc-v3';
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(['./', 'index.html', 'css/app.css', 'js/app.js', 'vendor/nerdamer.js', 'vendor/mathlive/mathlive.min.js', 'js/leitor.js', 'vendor/tinta/tinta.js'])).then(() => self.skipWaiting()));
 });

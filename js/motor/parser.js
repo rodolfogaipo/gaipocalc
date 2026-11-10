@@ -8,7 +8,8 @@ const PALAVRAS_FUNC = {
   senh: 'sinh', sinh: 'sinh', cosh: 'cosh', tgh: 'tanh', tanh: 'tanh',
   ln: 'ln', log: 'log', exp: 'exp',
 };
-const PALAVRAS_ESPECIAIS = ['sqrt', 'raiz', 'pi', 'mmc', 'mdc', 'mdc', 'abs', 'fatorar', 'lim', 'int', 'infinito', 'inf'];
+const PALAVRAS_ESPECIAIS = ['sqrt', 'raiz', 'pi', 'mmc', 'mdc', 'abs', 'fatorar', 'lim', 'int', 'infinito', 'inf', 'mediana', 'media', 'moda', 'variancia', 'desvio', 'amplitude', 'estatistica', 'comb', 'arranjo', 'perm'];
+export const CHAMADAS = ['mmc', 'mdc', 'fatorar', 'mediana', 'media', 'moda', 'variancia', 'desvio', 'amplitude', 'estatistica', 'comb', 'arranjo', 'perm'];
 const CMD_FUNC = {
   sin: 'sin', cos: 'cos', tan: 'tan', cot: 'cot', sec: 'sec', csc: 'csc', arcsin: 'asin', arccos: 'acos', arctan: 'atan',
   sinh: 'sinh', cosh: 'cosh', tanh: 'tanh', ln: 'ln', log: 'log', exp: 'exp', lg: 'log', tg: 'tan', sen: 'sin',
@@ -21,6 +22,7 @@ export function tokenizar(src) {
   let i = 0;
   let nivel = 0, nivelCall = -1;
   const s = src
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
     .replace(/\\placeholder(\[[^\]]*\])?\{\}/g, '☐')
     .replace(/[−–—]/g, '-')
     .replace(/[×·∙⋅]/g, '*')
@@ -111,6 +113,18 @@ export function tokenizar(src) {
   }
   return t;
 
+  // dentro de media(…): se tiver ';' separando, a vírgula é decimal (2,5; 3); senão separa (12,18)
+  function temPontoVirgulaAdiante() {
+    let d = 0;
+    for (let k = i; k < s.length; k++) {
+      const ch = s[k];
+      if (ch === '(') d++;
+      else if (ch === ')') { d--; if (d <= 0 && k > i) return false; }
+      else if (ch === ';' && d >= 1) return true;
+    }
+    return false;
+  }
+
   function tratarPalavra(p) {
     if (PALAVRAS_FUNC[p]) push('func', PALAVRAS_FUNC[p]);
     else if (p === 'sqrt' || p === 'raiz') push('sqrt');
@@ -118,7 +132,7 @@ export function tokenizar(src) {
     else if (p === 'infinito' || p === 'inf') push('const', 'inf');
     else if (p === 'lim') push('lim');
     else if (p === 'int') push('int');
-    else { push('word', p); if (p !== 'abs') nivelCall = nivel + 1; }
+    else { push('word', p); if (p !== 'abs' && !temPontoVirgulaAdiante()) nivelCall = nivel + 1; }
   }
 
   function tratarComando(cmd) {
@@ -158,7 +172,7 @@ export function tokenizar(src) {
           if (!w) return;
           if (PALAVRAS_FUNC[w]) return push('func', PALAVRAS_FUNC[w]);
           if (w === 'd') return push('id', 'd');
-          if (w === 'mmc' || w === 'mdc' || w === 'fatorar') { nivelCall = nivel + 1; return push('word', w); }
+          if (CHAMADAS.includes(w)) { if (!temPontoVirgulaAdiante()) nivelCall = nivel + 1; return push('word', w); }
           if (w === 'e') return push('id', 'e');
           if (w.length === 1) return push('id', w);
           // texto qualquer: tenta como letras
@@ -465,7 +479,7 @@ class Parser {
   }
 
   palavra(w) {
-    if (w === 'mmc' || w === 'mdc' || w === 'fatorar') {
+    if (CHAMADAS.includes(w)) {
       this.expect('(', `Use ${w}(…) com parênteses.`);
       const args = [this.expr()];
       while (this.is(',') || this.is(';')) { this.next(); args.push(this.expr()); }

@@ -36,8 +36,22 @@ function potencias(f) {
   return [...f.entries()].sort((a, b) => (a[0] < b[0] ? -1 : 1)).map(([p, e]) => (e > 1 ? `${p}^{${e}}` : `${p}`)).join('\\cdot ');
 }
 
+import { estatistica } from './estatistica.js';
+import { combinatoria } from './extras.js';
+
+const ESTAT = { media: 'media', mediana: 'mediana', moda: 'moda', variancia: 'variancia', desvio: 'desvio', amplitude: 'amplitude', estatistica: 'tudo' };
+
 export function ferramenta(node) {
   const nome = node.n;
+  if (ESTAT[nome]) {
+    const xs = node.args.map((a) => { const p = deAST(a); if (!p.eQ) throw new ErroMat('Estatística só com números.'); return p.q; });
+    return estatistica(xs, ESTAT[nome]);
+  }
+  if (nome === 'comb' || nome === 'arranjo' || nome === 'perm') {
+    const xs = node.args.map((a) => { const p = deAST(a); if (!p.eQ) throw new ErroMat('Use números inteiros.'); return p.q; });
+    if (nome !== 'perm' && xs.length !== 2) throw new ErroMat(`Use ${nome}(n; p).`);
+    return combinatoria(nome, xs[0], xs[1]);
+  }
   const nums = inteiros(node.args);
   if (nome === 'fatorar') {
     if (nums.length !== 1) throw new ErroMat('Use fatorar(n) com um número só.');

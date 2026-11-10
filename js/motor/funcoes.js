@@ -143,6 +143,26 @@ export function analisarFuncao(no, opts = {}) {
 
   // uma variável: raízes e corte no eixo y
   const linhas = [dominio, ...derivs];
+  let grafico = null;
+  if (vs.length === 1 && !extras.length) {
+    grafico = { tipo: 'funcoes', funcoes: [{ latex: L(f), ast: f, v: vs[0] }], marcas: [] };
+    // parábola: vértice, concavidade, eixo, imagem
+    try {
+      const c = deAST(f, opts).coefsQ(vs[0]);
+      if (c && c.length === 3 && !c[2].isZero) {
+        const [cc, bb, aa] = c;
+        const xv = bb.neg().div(aa.mul(2));
+        const delta = bb.mul(bb).sub(aa.mul(cc).mul(4));
+        const yv = delta.neg().div(aa.mul(4));
+        const v = vs[0];
+        passos.push({ titulo: 'Parábola', texto: `É uma função do 2º grau: o gráfico é uma parábola com a boca para ${aa.isNeg ? 'baixo (a < 0)' : 'cima (a > 0)'}.`, latex: `a=${aa.toLatex()},\\ b=${bb.toLatex()},\\ c=${cc.toLatex()}` });
+        passos.push({ titulo: 'Vértice', texto: `O ponto ${aa.isNeg ? 'mais alto' : 'mais baixo'} da parábola.`, latex: `x_v=\\frac{-b}{2a}=${xv.toLatex()},\\quad y_v=\\frac{-\\Delta}{4a}=\\frac{${delta.neg().toLatex()}}{${aa.mul(4).toLatex()}}=${yv.toLatex()}` });
+        passos.push({ titulo: 'Eixo de simetria e imagem', texto: `A parábola é simétrica em relação à reta ${v} = x_v. ${aa.isNeg ? 'O maior' : 'O menor'} valor da função é y_v.`, latex: `${v}=${xv.toLatex()},\\qquad \\text{Im}=\\left\\{y\\in\\mathbb{R}\\mid y${aa.isNeg ? '\\le' : '\\ge'} ${yv.toLatex()}\\right\\}` });
+        linhas.push(`V=\\left(${xv.toLatex()};\\ ${yv.toLatex()}\\right)`);
+        grafico.marcas.push({ x: xv.toNumber(), y: yv.toNumber(), rotulo: 'V' });
+      }
+    } catch (e) { if (!(e instanceof ErroMat)) throw e; }
+  }
   if (vs.length === 1 && !extras.length) {
     const v = vs[0];
     try {
@@ -163,5 +183,6 @@ export function analisarFuncao(no, opts = {}) {
     entrada: defin,
     resposta: `\\begin{array}{l}${linhas.join('\\\\')}\\end{array}`,
     passos,
+    grafico,
   };
 }

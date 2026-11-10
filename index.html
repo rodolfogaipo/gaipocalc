@@ -87,6 +87,14 @@
         </div>
       </div>
     </section>
+
+    <!-- MAIS: ferramentas -->
+    <section class="tela" data-tela="mais" hidden>
+      <div class="mais">
+        <h2>Ferramentas</h2>
+        <div class="grade-ferr" id="gradeFerr"></div>
+      </div>
+    </section>
   </div>
 
   <nav class="navbar">
@@ -94,14 +102,25 @@
     <button data-aba="caneta"><i><svg viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></i>Escrever</button>
     <button data-aba="foto"><i><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></i>Foto</button>
     <button data-aba="voz"><i><svg viewBox="0 0 24 24"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 19v3"/></svg></i>Falar</button>
+    <button data-aba="mais"><i><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></svg></i>Mais</button>
   </nav>
 </div>
+
+<!-- TELA DE UMA FERRAMENTA -->
+<section id="ferramenta" class="solucao" hidden>
+  <header class="appbar">
+    <button id="ferVoltar" class="icone" aria-label="Voltar"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
+    <div class="appbar-titulo" id="ferTitulo">Ferramenta</div>
+  </header>
+  <div class="sol-corpo" id="ferCorpo"></div>
+</section>
 
 <!-- TELA DA SOLUÇÃO -->
 <section id="solucao" class="solucao" hidden>
   <header class="appbar">
     <button id="solVoltar" class="icone" aria-label="Voltar"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></button>
     <div class="appbar-titulo">Solução</div>
+    <button id="btnPdf" class="icone" aria-label="Exportar PDF"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M12 18v-6M9 15l3 3 3-3"/></svg></button>
     <button id="btnCopiar" class="icone" aria-label="Copiar resposta"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button>
   </header>
   <div class="sol-corpo">
@@ -115,6 +134,7 @@
       <div id="resConjunto" class="mat conj"></div>
     </div>
     <div id="resAviso" class="aviso" hidden></div>
+    <div id="solGrafico" class="sol-grafico" hidden><canvas id="cvSol"></canvas><button id="solAbrirGrafico" class="chip-claro" hidden>Abrir no gráfico ↗</button></div>
     <button id="btnPassos" class="btn-passos"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg><span>Ver passo a passo</span></button>
     <ol id="passos" class="passos" hidden></ol>
     <button id="solEditar" class="btn-tom largo">Editar a conta</button>
@@ -162,6 +182,8 @@
 <div id="toast" class="toast" role="status" hidden></div>
 
 <script src="vendor/nerdamer.js"></script>
+<script src="vendor/pdf/jspdf.umd.min.js" defer></script>
+<script src="vendor/pdf/html2canvas.min.js" defer></script>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>

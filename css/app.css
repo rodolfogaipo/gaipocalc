@@ -84,9 +84,9 @@ b { font-weight: 800; }
 @keyframes aparece { from { opacity: 0; } to { opacity: 1; } }
 
 /* barra de navegação inferior */
-.navbar { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); background: var(--sup); border-top: 1px solid var(--linha); padding: 6px 4px calc(8px + var(--safe-bottom)); }
-.navbar button { display: flex; flex-direction: column; align-items: center; gap: 3px; border: 0; background: none; font-size: 12.5px; font-weight: 700; color: var(--suave); padding: 2px 0; }
-.navbar i { width: 60px; height: 32px; border-radius: 16px; display: grid; place-items: center; transition: background .2s; }
+.navbar { flex: none; display: grid; grid-template-columns: repeat(5, 1fr); background: var(--sup); border-top: 1px solid var(--linha); padding: 6px 4px calc(8px + var(--safe-bottom)); }
+.navbar button { display: flex; flex-direction: column; align-items: center; gap: 3px; border: 0; background: none; font-size: 12px; font-weight: 700; color: var(--suave); padding: 2px 0; }
+.navbar i { width: 54px; height: 32px; border-radius: 16px; display: grid; place-items: center; transition: background .2s; }
 .navbar button.ativa { color: var(--texto); }
 .navbar button.ativa i { background: var(--azul-cl); color: var(--azul); }
 
@@ -197,6 +197,45 @@ math-field::part(menu-toggle), math-field::part(virtual-keyboard-toggle) { displ
 .opcao-leitura { width: 100%; text-align: left; border: 2px solid var(--linha); background: var(--sup); border-radius: 16px; padding: 12px 14px; font-size: 1.15rem; overflow-x: auto; }
 .opcao-leitura:active { border-color: var(--azul); background: var(--azul-cl); }
 
+/* ---------- mais / ferramentas ---------- */
+.mais { flex: 1; overflow-y: auto; padding: 16px; }
+.mais h2 { margin: 2px 2px 14px; font-size: 22px; }
+.grade-ferr { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.card-ferr { border: 0; background: var(--sup); border-radius: 20px; padding: 16px; text-align: left; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 3px rgba(21, 28, 51, .06); min-height: 112px; }
+.card-ferr:active { transform: scale(.98); }
+.card-ferr .ico-f { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; font-size: 22px; font-weight: 800; }
+.card-ferr b { font-size: 15.5px; }
+.card-ferr small { color: var(--suave); font-size: 12.5px; line-height: 1.3; }
+.form-ferr { background: var(--sup); border-radius: 20px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.form-ferr label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; font-weight: 700; color: var(--suave); }
+.form-ferr input, .form-ferr select, .form-ferr textarea { padding: 13px 14px; border-radius: 14px; border: 1px solid var(--linha); background: var(--sup2); color: var(--texto); font-size: 17px; font-weight: 600; }
+.form-ferr textarea { min-height: 110px; resize: vertical; font-family: inherit; }
+.form-ferr input:focus, .form-ferr select:focus, .form-ferr textarea:focus { outline: 2px solid var(--azul); background: #fff; }
+.form-ferr .dica-f { font-size: 13px; color: var(--suave); margin: -4px 0 0; }
+.linha-campos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.seg { display: flex; gap: 6px; flex-wrap: wrap; }
+.seg button { flex: 1; min-width: 30%; border: 1px solid var(--linha); background: var(--sup2); border-radius: 12px; padding: 10px 8px; font-weight: 700; font-size: 14px; }
+.seg button.on { background: var(--azul-cl); border-color: var(--azul); color: var(--azul-esc); }
+.grade-mat { display: grid; gap: 6px; }
+.grade-mat input { text-align: center; padding: 10px 4px; }
+.sol-grafico { position: relative; margin-top: 12px; background: #fff; border-radius: 18px; overflow: hidden; box-shadow: 0 1px 3px rgba(21, 28, 51, .06); }
+.sol-grafico canvas { display: block; width: 100%; height: 280px; }
+.chip-claro { position: absolute; right: 10px; top: 10px; border: 1px solid var(--linha); background: rgba(255, 255, 255, .95); border-radius: 20px; padding: 7px 12px; font-weight: 700; font-size: 13px; color: var(--azul-esc); }
+/* tela do gráfico */
+.graf-tela { display: flex; flex-direction: column; gap: 10px; }
+.graf-cv { position: relative; background: #fff; border-radius: 18px; overflow: hidden; height: 52vh; min-height: 300px; box-shadow: 0 1px 3px rgba(21, 28, 51, .06); }
+.graf-cv canvas { display: block; width: 100%; height: 100%; }
+.graf-zoom { position: absolute; right: 10px; bottom: 10px; display: flex; flex-direction: column; gap: 6px; }
+.graf-zoom button { width: 40px; height: 40px; border-radius: 12px; border: 1px solid var(--linha); background: #fff; font-size: 20px; font-weight: 800; }
+.graf-lista { display: flex; flex-direction: column; gap: 8px; }
+.graf-item { display: flex; align-items: center; gap: 8px; background: var(--sup); border-radius: 14px; padding: 6px 8px 6px 12px; }
+.graf-item .cor { width: 14px; height: 14px; border-radius: 50%; flex: none; }
+.graf-item span { font-weight: 800; color: var(--suave); }
+.graf-item input { flex: 1; min-width: 0; border: 0; background: transparent; font-size: 17px; font-weight: 600; padding: 8px 4px; }
+.graf-item input:focus { outline: none; }
+.graf-item button { border: 0; background: none; font-size: 20px; color: var(--suave); width: 36px; height: 36px; }
+.graf-dica { font-size: 13px; color: var(--suave); }
+
 /* ---------- carregando ---------- */
 .carregando { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: rgba(21, 28, 51, .25); }
 .carregando-caixa { display: flex; align-items: center; gap: 14px; background: var(--sup); padding: 18px 22px; border-radius: 20px; font-weight: 700; box-shadow: 0 12px 40px rgba(21, 28, 51, .2); }
@@ -234,3 +273,27 @@ math-field::part(menu-toggle), math-field::part(virtual-keyboard-toggle) { displ
   .doca { min-height: 228px; }
   math-field { font-size: 1.7rem; }
 }
+
+/* ---------- folha do PDF ---------- */
+.folha-pdf { width: 794px; padding: 44px 52px 36px; background: #fff; color: #151c33; font-family: 'Nunito', system-ui, sans-serif; }
+.pdf-topo { display: flex; align-items: center; gap: 12px; border-bottom: 2px solid #e6eeff; padding-bottom: 14px; margin-bottom: 18px; }
+.pdf-topo img { width: 46px; height: 46px; }
+.pdf-topo b { font-size: 22px; letter-spacing: 1px; display: block; }
+.pdf-topo b span { color: #1f6fff; }
+.pdf-topo small { color: #6b748c; font-size: 13px; }
+.pdf-tag { display: inline-block; background: #e6eeff; color: #1554cc; font-weight: 800; font-size: 14px; padding: 5px 12px; border-radius: 20px; margin-bottom: 8px; }
+.folha-pdf h3 { font-size: 14px; text-transform: uppercase; letter-spacing: 1.2px; color: #6b748c; margin: 18px 0 8px; }
+.pdf-mat { font-size: 20px; }
+.pdf-mat.grande { font-size: 24px; }
+.pdf-resp { background: #eef4ff; border-left: 5px solid #1f6fff; border-radius: 10px; padding: 4px 18px 14px; margin-top: 14px; }
+.pdf-dec { color: #1554cc; font-weight: 700; margin-top: 4px; }
+.pdf-aviso { margin-top: 12px; padding: 10px 14px; border-radius: 10px; background: #fff3dc; color: #6e4500; }
+.pdf-graf { width: 100%; border: 1px solid #e3e7f0; border-radius: 10px; }
+.pdf-passos { margin: 0; padding-left: 26px; }
+.pdf-passos li { margin-bottom: 14px; }
+.pdf-passos h4 { margin: 0 0 3px; font-size: 16px; }
+.pdf-passos p { margin: 0 0 6px; color: #48526b; font-size: 15px; }
+.pdf-passos .mat { font-size: 18px; background: #f7f8fc; border-radius: 8px; padding: 6px 10px; overflow: visible; }
+.pdf-passos details > summary { display: none; }
+.pdf-rodape { margin-top: 26px; padding-top: 10px; border-top: 1px solid #e3e7f0; color: #8b94aa; font-size: 12px; text-align: center; }
+#solucao { z-index: 32; }
