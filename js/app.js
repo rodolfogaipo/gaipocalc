@@ -5,7 +5,6 @@ import { criarCAS } from './motor/cas.js';
 import { latex as latexDe, temVar } from './motor/ast.js';
 import { falaParaExpressao } from './voz.js';
 import { Caneta } from './caneta.js';
-import { VERSAO } from './config.js';
 import { iniciarFerramentas, abrir as abrirFerramenta } from './ferramentas-ui.js';
 import { GraficoFuncoes, desenharEstatistica, desenharBarras } from './grafico.js';
 
@@ -235,7 +234,12 @@ function mostrarSolucao(r, origem) {
 
 let graficoSol = null;
 function desenharGraficoSolucao(g) {
-  const box = $('solGrafico'), cv = $('cvSol');
+  const box = $('solGrafico');
+  // área de desenho nova a cada solução (o gráfico anterior não pode redesenhar por cima)
+  if (graficoSol) { graficoSol.ro?.disconnect(); graficoSol = null; }
+  const novo = document.createElement('canvas'); novo.id = 'cvSol';
+  $('cvSol').replaceWith(novo);
+  const cv = novo;
   box.hidden = !g;
   $('solAbrirGrafico').hidden = !(g && g.tipo === 'funcoes');
   if (!g) return;
@@ -575,7 +579,6 @@ $('dlgConfig').addEventListener('close', () => {
   if (aba === 'teclado' && $('solucao').hidden) mostrarTeclado();
 });
 for (const d of [$('dlgConfig'), $('dlgHistorico')]) d.addEventListener('click', (e) => { if (e.target === d) d.close(); });
-$('versao').textContent = 'v' + VERSAO;
 
 // ---------- exemplos ----------
 const EXEMPLOS = [

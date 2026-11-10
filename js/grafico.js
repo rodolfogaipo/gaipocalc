@@ -165,24 +165,31 @@ export class GraficoFuncoes {
       const y0 = f.calc(0); if (isFinite(y0)) pontos.push({ x: 0, y: y0, cor: f.cor, rotulo: '' });
     }
     const usados = [], feitos = [];
-    // marcas com nome (vértice) primeiro
-    pontos.sort((a, b) => (b.rotulo ? 1 : 0) - (a.rotulo ? 1 : 0));
+    pontos.sort((a, b) => (b.rotulo ? 1 : 0) - (a.rotulo ? 1 : 0)); // marcas com nome (vértice) primeiro
+    const visiveis = [];
     for (const m of pontos) {
       const [px, py] = this.paraTela(m.x, m.y);
       if (px < -10 || px > W + 10 || py < -10 || py > H + 10) continue;
       if (feitos.some(([a, b]) => Math.hypot(a - px, b - py) < 3)) continue;
-      feitos.push([px, py]);
+      feitos.push([px, py]); visiveis.push({ m, px, py });
+      // reserva o espaço do próprio ponto para nenhum rótulo cobrir
+      usados.push([px - 6, py - 6, 12, 12]);
+    }
+    // 1º os pontos, depois os rótulos (rótulo nunca fica embaixo de um ponto)
+    for (const { m, px, py } of visiveis) {
       c.fillStyle = '#fff'; c.strokeStyle = m.cor || '#151c33'; c.lineWidth = 2.2;
       c.beginPath(); c.arc(px, py, 4.5, 0, 7); c.fill(); c.stroke();
-      c.font = '700 11.5px Nunito, sans-serif'; c.textAlign = 'left';
+    }
+    c.font = '700 11.5px Nunito, sans-serif'; c.textAlign = 'left';
+    for (const { m, px, py } of visiveis) {
       const txt = `${m.rotulo ? m.rotulo + ' ' : ''}(${num(m.x)}; ${num(m.y)})`;
       const w = c.measureText(txt).width + 6;
-      // tenta quatro posições em volta do ponto
-      const opcoes = [[px + 7, py - 18], [px + 7, py + 6], [px - w - 7, py - 18], [px - w - 7, py + 6]];
-      const livre = opcoes.find(([x, y]) => x >= 0 && x + w <= W && y >= 0 && y + 15 <= H && !usados.some((u) => x < u[0] + u[2] && x + w > u[0] && y < u[1] + 15 && y + 15 > u[1]));
+      const opcoes = [[px + 8, py - 19], [px + 8, py + 6], [px - w - 8, py - 19], [px - w - 8, py + 6], [px - w / 2, py - 24], [px - w / 2, py + 10]];
+      const bate = (x, y) => usados.some((u) => x < u[0] + u[2] && x + w > u[0] && y < u[1] + (u[3] || 15) && y + 15 > u[1]);
+      const livre = opcoes.find(([x, y]) => x >= 0 && x + w <= W && y >= 0 && y + 15 <= H && !bate(x, y));
       if (!livre) continue;
-      usados.push([livre[0], livre[1], w]);
-      c.fillStyle = 'rgba(255,255,255,.85)'; c.fillRect(livre[0], livre[1], w, 15);
+      usados.push([livre[0], livre[1], w, 15]);
+      c.fillStyle = 'rgba(255,255,255,.9)'; c.fillRect(livre[0], livre[1], w, 15);
       c.fillStyle = '#151c33'; c.fillText(txt, livre[0] + 3, livre[1] + 11.5);
     }
     // toque: valor da função naquele x
