@@ -192,6 +192,11 @@ math-field::part(menu-toggle), math-field::part(virtual-keyboard-toggle) { displ
 .alt { border: 1px solid var(--linha); background: var(--sup); border-radius: 14px; padding: 8px 12px; font-size: 1rem; max-width: 100%; overflow-x: auto; }
 .alt:active { background: var(--azul-cl); }
 
+.sub { margin: -8px 0 14px; color: var(--suave); font-size: 14.5px; }
+.lista-leituras { display: flex; flex-direction: column; gap: 10px; }
+.opcao-leitura { width: 100%; text-align: left; border: 2px solid var(--linha); background: var(--sup); border-radius: 16px; padding: 12px 14px; font-size: 1.15rem; overflow-x: auto; }
+.opcao-leitura:active { border-color: var(--azul); background: var(--azul-cl); }
+
 /* ---------- carregando ---------- */
 .carregando { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: rgba(21, 28, 51, .25); }
 .carregando-caixa { display: flex; align-items: center; gap: 14px; background: var(--sup); padding: 18px 22px; border-radius: 20px; font-weight: 700; box-shadow: 0 12px 40px rgba(21, 28, 51, .2); }

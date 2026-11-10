@@ -12,7 +12,7 @@ export function preparar() {
   if (!carregando) {
     carregando = (async () => {
       vocab = await loadVocab(BASE + 'modelo/vocab.json');
-      const m = new InferenceEngine({ encoderUrl: BASE + 'modelo/encoder_int8.onnx', decoderUrl: BASE + 'modelo/decoder_int8.onnx', beamWidth: 3, executionProvider: 'wasm' });
+      const m = new InferenceEngine({ encoderUrl: BASE + 'modelo/encoder_int8.onnx', decoderUrl: BASE + 'modelo/decoder_int8.onnx', beamWidth: 2, executionProvider: 'wasm' });
       await m.init();
       motor = m;
     })().catch((e) => { carregando = null; throw e; });
@@ -355,7 +355,9 @@ export async function lerImagem(canvas, { tudo = false, valida = () => 1, progre
   const preps = new Map();
   const leituras = [];
   for (const [k, [lado, raio]] of VARIANTES_FOTO.entries()) {
-    progresso(k + 1, VARIANTES_FOTO.length);
+    // duas leituras iguais: já tem certeza, não precisa das outras (bem mais rápido)
+    if (k === 2 && leituras.length === 2 && leituras[0].latex === leituras[1].latex && !suspeita(leituras[0].latex)) break;
+    progresso(k + 1, k < 2 ? 2 : VARIANTES_FOTO.length);
     await new Promise((r) => setTimeout(r, 0));
     if (!preps.has(lado)) preps.set(lado, prepararFoto(canvas, { tudo }, lado));
     motor.__confianca = undefined;
@@ -363,7 +365,8 @@ export async function lerImagem(canvas, { tudo = false, valida = () => 1, progre
     const latex = limpar(r.latex);
     if (latex) leituras.push({ latex, conf: motor.__confianca ?? -1 });
   }
-  if (!leituras.length) return { latex: '', alternativas: [] };
+  if (!leituras.length) return { latex: '', alternativas: [], certeza: false };
+  if (leituras.length === 2 && leituras[0].latex === leituras[1].latex && !suspeita(leituras[0].latex)) return { latex: leituras[0].latex, alternativas: [], certeza: true };
   const votada = votar(leituras);
   const cands = [];
   if (votada) cands.push({ latex: votada, pontos: valida(votada) + 0.3 });
@@ -395,8 +398,15 @@ function votar(leituras) {
   return out.join(' ').replace(/\s*([{}^_()=+\-])\s*/g, '$1').replace(/(\d) (\d)/g, '$1$2').replace(/ +/g, ' ').trim();
 }
 
+// leitura com coisas improváveis numa conta escolar: expoente letra (yⁱ), reticências, "1·x" colado
+export function suspeita(l) {
+  return /\^\{?[a-zA-Z]\}?/.test(l.replace(/e\^\{?[^}]*\}?/g, '')) || /\\[lc]?dots/.test(l) || /\d\s*\\cdot\s*[a-z]/.test(l) || /\\sum|\\prod|\\exists|\\forall/.test(l);
+}
+
 function resultado(leituras) {
   const vistos = new Set();
   const unicas = leituras.filter((l) => l.latex && !vistos.has(l.latex) && vistos.add(l.latex));
-  return { latex: unicas[0]?.latex || '', alternativas: unicas.slice(1, 4).map((l) => l.latex) };
+  // certeza: só uma leitura, ou a primeira bem à frente da segunda
+  const certeza = !suspeita(unicas[0]?.latex || '') && (unicas.length < 2 || (unicas[0].pontos ?? 0) - (unicas[1].pontos ?? 0) > 0.35);
+  return { latex: unicas[0]?.latex || '', alternativas: unicas.slice(1, 4).map((l) => l.latex), certeza };
 }

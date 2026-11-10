@@ -282,6 +282,10 @@ function usarLeitura(lido, de) {
   if (!ok && alternativas.length) { latex = alternativas.shift(); ok = true; }
   mf.value = latex;
   atualizarPrevia();
+  if (ok && typeof lido === 'object' && lido.certeza === false && alternativas.length) {
+    escolherLeitura([latex, ...alternativas], de);
+    return;
+  }
   if (!ok) {
     trocarAba('teclado');
     toast(`Não li direito a ${de}. Corrija no teclado e toque em Resolver.`, true);
@@ -294,6 +298,26 @@ function usarLeitura(lido, de) {
 function validarLeitura(latex) {
   try { analisar(latex); } catch { return 0; }
   try { resolver(latex, opts()); return 1.5; } catch { return 1; }
+}
+
+// leitura em dúvida: pergunta antes de calcular
+function escolherLeitura(opcoes, de) {
+  const ul = $('listaLeituras');
+  ul.innerHTML = '';
+  opcoes.slice(0, 4).forEach((op, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'opcao-leitura';
+    const m = document.createElement('div'); m.className = 'mat'; mat(m, op); b.append(m);
+    b.addEventListener('click', () => {
+      $('dlgLeitura').close();
+      alternativas = opcoes.filter((x) => x !== op);
+      mf.value = op; atualizarPrevia();
+      resolverLatex(op, `lido da ${de} — você confirmou`);
+    });
+    ul.append(b);
+  });
+  $('leituraEditar').onclick = () => { $('dlgLeitura').close(); mf.value = opcoes[0]; atualizarPrevia(); trocarAba('teclado'); toast('Corrija a conta e toque em Resolver.'); };
+  kb?.hide({ animate: false });
+  $('dlgLeitura').showModal();
 }
 
 // ---------- escrever ----------
@@ -418,7 +442,7 @@ async function lerFoto() {
   carregando('Lendo a foto…');
   try {
     const m = await leitor();
-    usarLeitura(await m.lerImagem(c, { tudo: !!fotoRecorte, valida: validarLeitura, progresso: (i, n) => carregando(`Lendo a foto com cuidado… ${i}/${n}`) }), 'foto');
+    usarLeitura(await m.lerImagem(c, { tudo: !!fotoRecorte, valida: validarLeitura, progresso: (i, n) => carregando(n > 2 ? `Conferindo a leitura… ${i}/${n}` : 'Lendo a foto…') }), 'foto');
   } catch (e) { console.error(e); toast(e.message || 'Não consegui ler a foto.', true); }
   finally { carregando(null); }
 }
