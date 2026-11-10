@@ -187,6 +187,11 @@ math-field::part(menu-toggle), math-field::part(virtual-keyboard-toggle) { displ
 .passos summary { color: var(--azul); font-size: 14px; font-weight: 700; }
 .passos .det { margin-top: 8px; padding-left: 12px; border-left: 3px solid var(--azul-cl); }
 
+.alternativas { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.alternativas small { width: 100%; font-size: 13px; font-weight: 700; color: var(--suave); }
+.alt { border: 1px solid var(--linha); background: var(--sup); border-radius: 14px; padding: 8px 12px; font-size: 1rem; max-width: 100%; overflow-x: auto; }
+.alt:active { background: var(--azul-cl); }
+
 /* ---------- carregando ---------- */
 .carregando { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: rgba(21, 28, 51, .25); }
 .carregando-caixa { display: flex; align-items: center; gap: 14px; background: var(--sup); padding: 18px 22px; border-radius: 20px; font-weight: 700; box-shadow: 0 12px 40px rgba(21, 28, 51, .2); }

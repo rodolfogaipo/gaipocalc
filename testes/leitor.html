@@ -31,13 +31,13 @@ function foto(t, escala, ruido) {
 (async () => {
   try {
     const res = [];
-    for (const t of ['2+3=5', '2x+3=7']) res.push('caneta ' + t + ' -> ' + await lerTracos(escrever(t)));
+    for (const t of ['2+3=5', '2x+3=7']) res.push('caneta ' + t + ' -> ' + (await lerTracos(escrever(t))).latex);
     for (const [t, e, r] of [['2x+3=7', 3, 30], ['2+3=5', 5, 50], ['7x=3', 2, 20]]) {
       const c = foto(t, e, r);
       const ent = imagemParaEntrada(c);
       const v = document.createElement('canvas'); v.width = ent.width; v.height = ent.height; const vc = v.getContext('2d'); const im = vc.createImageData(ent.width, ent.height); ent.tensor.forEach((g, i) => { im.data[i*4] = im.data[i*4+1] = im.data[i*4+2] = g * 255; im.data[i*4+3] = 255; }); vc.putImageData(im, 0, 0);
       document.getElementById('imgs').append(c, v); c.style.width = '400px';
-      res.push('foto ' + t + ' (' + c.width + 'x' + c.height + ') -> ' + await lerImagem(c));
+      res.push('foto ' + t + ' (' + c.width + 'x' + c.height + ') -> ' + (await lerImagem(c)).latex);
     }
     out.textContent = res.join('\n');
   } catch (e) { out.textContent = 'ERRO ' + e.message + '\n' + e.stack; }

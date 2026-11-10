@@ -29,10 +29,24 @@ export function resolver(entrada, opts = {}) {
     case 'lim': r = limiteComPassos(ast, opts); break;
     case 'call': r = ferramenta(ast); break;
     default:
-      if (A.temVar(ast)) r = simplificar(ast, opts);
+      if (A.temVar(ast)) r = expressaoComLetras(ast, opts);
       else r = resolverAritmetica(ast, opts);
   }
   r.ast = ast;
+  return r;
+}
+
+// expressão com letras: se dá para simplificar de verdade, simplifica; senão analisa como função
+function expressaoComLetras(ast, opts) {
+  const vs = [...A.variaveis(ast)].sort();
+  let melhora = false;
+  try {
+    const b = A.latex(deAST(ast, opts).toASTBonito(vs.includes('x') ? 'x' : vs[0]));
+    melhora = b.length < A.latex(ast).length - 1 || temProdutoDeSomas(ast);
+  } catch (e) { if (!(e instanceof ErroMat)) throw e; }
+  if (melhora || vs.length > 3) return simplificar(ast, opts);
+  const r = analisarFuncao({ t: 'func', nome: 'f', vars: vs, f: ast }, opts);
+  r.titulo = vs.length > 1 ? 'Função de várias variáveis' : 'Função';
   return r;
 }
 

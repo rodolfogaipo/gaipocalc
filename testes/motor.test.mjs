@@ -61,7 +61,8 @@ caso('(x+1)^2', 'x^{2}+2x+1');
 caso('2x+3x-x', '4x');
 caso('(x+2)(x-2)', 'x^{2}-4');
 caso('\\frac{x^2-1}{x-1}', 'x+1');
-caso('x^2-5x+6', (r) => r.passos.some((p) => p.titulo === 'Forma fatorada'));
+caso('x^2-5x+6', (r) => r.resposta.includes('x=2') && r.resposta.includes("f'(x)=2x-5"));
+caso('\\frac{x^2}{1-x^2-y^2}', (r) => r.resposta.includes('x^{2}+y^{2}\\ne 1'));
 // equações
 caso('2x+3=7', 'x=2');
 caso('3x-5=2x+1', 'x=6');

@@ -154,7 +154,7 @@ function resolverLatex(latex, origem = '✓ calculado no aparelho') {
   } catch (e) {
     const amigavel = e instanceof ErroMat || e?.name === 'ErroMat';
     if (!amigavel) console.error(e);
-    mostrarFalha(latex, amigavel ? e.message : 'Não consegui resolver essa no aparelho.');
+    mostrarFalha(latex, amigavel ? e.message : 'Não consegui resolver essa no aparelho.', origem);
     return;
   }
   mostrarSolucao(r, origem);
@@ -178,8 +178,8 @@ window.addEventListener('popstate', () => {
   if ($('canetaCaixa').classList.contains('cheia')) telaCheia(false, true);
 });
 
-function mostrarFalha(latex, msg) {
-  ultimo = { latex, resposta: '' };
+function mostrarFalha(latex, msg, origem = '') {
+  ultimo = { latex, resposta: '', origem };
   $('resTipo').textContent = 'Não consegui resolver';
   $('resOrigem').textContent = '';
   mat($('resQuestao'), latex);
@@ -190,6 +190,7 @@ function mostrarFalha(latex, msg) {
   av.hidden = false; av.className = 'aviso erro'; av.textContent = msg;
   $('btnPassos').hidden = true;
   $('passos').hidden = true;
+  mostrarAlternativas(ultimo.origem || '');
   abrirSolucao();
 }
 
@@ -213,7 +214,28 @@ function mostrarSolucao(r, origem) {
   desenharPassos($('passos'), r.passos);
   $('passos').hidden = true;
   salvarHistorico(r.entrada, r.resposta, r.titulo);
+  mostrarAlternativas(origem);
   abrirSolucao();
+}
+
+function mostrarAlternativas(origem) {
+  const box = $('alternativas');
+  box.innerHTML = '';
+  const lista = /^lido/.test(origem) ? alternativas : [];
+  box.hidden = !lista.length;
+  if (!lista.length) return;
+  const t = document.createElement('small'); t.textContent = 'Não é isso? Toque na leitura certa:'; box.append(t);
+  for (const a of lista) {
+    const b = document.createElement('button'); b.className = 'alt';
+    mat(b, a, false);
+    b.addEventListener('click', () => {
+      const outras = [ultimo.latex, ...alternativas.filter((x) => x !== a)];
+      alternativas = outras;
+      mf.value = a; atualizarPrevia();
+      resolverLatex(a, origem);
+    });
+    box.append(b);
+  }
 }
 
 function desenharPassos(ol, passos) {
@@ -250,10 +272,14 @@ $('btnCopiar').addEventListener('click', async () => {
 });
 
 // o que foi lido (caneta/foto/voz) vai para o visor; se der para resolver, abre a solução
-function usarLeitura(latex, de) {
+let alternativas = [];
+function usarLeitura(lido, de) {
+  let latex = typeof lido === 'string' ? lido : lido.latex;
+  alternativas = (typeof lido === 'string' ? [] : lido.alternativas || []).filter((a) => { try { analisar(a); return true; } catch { return false; } });
   if (!latex) { toast('Não consegui ler. Escreva maior e com os símbolos separados.', true); return; }
   let ok = true;
   try { analisar(latex); } catch { ok = false; }
+  if (!ok && alternativas.length) { latex = alternativas.shift(); ok = true; }
   mf.value = latex;
   atualizarPrevia();
   if (!ok) {
@@ -289,9 +315,9 @@ async function lerCaneta() {
   carregando('Lendo sua letra…');
   try {
     const m = await leitor();
-    const latex = await m.lerTracos(caneta.ultimaConta(), validarLeitura);
+    const lido = await m.lerTracos(caneta.ultimaConta(), validarLeitura);
     if ($('canetaCaixa').classList.contains('cheia')) telaCheia(false);
-    usarLeitura(latex, 'caneta');
+    usarLeitura(lido, 'caneta');
   } catch (e) { console.error(e); toast(e.message || 'Não consegui ler a escrita.', true); }
   finally { carregando(null); }
 }
@@ -392,7 +418,7 @@ async function lerFoto() {
   carregando('Lendo a foto…');
   try {
     const m = await leitor();
-    usarLeitura(await m.lerImagem(c), 'foto');
+    usarLeitura(await m.lerImagem(c, { tudo: !!fotoRecorte, valida: validarLeitura, progresso: (i, n) => carregando(`Lendo a foto com cuidado… ${i}/${n}`) }), 'foto');
   } catch (e) { console.error(e); toast(e.message || 'Não consegui ler a foto.', true); }
   finally { carregando(null); }
 }

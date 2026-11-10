@@ -35,7 +35,7 @@ export function limpar(latex) {
 }
 
 export async function lerTracos(tracos, valida) {
-  return (await lerTracosMelhor(tracos, valida)).melhor.latex;
+  return resultado((await lerTracosMelhor(tracos, valida)).todas);
 }
 
 // escolhe a leitura mais provável entre as direções testadas
@@ -142,7 +142,7 @@ const MODEL_H = 256, TARGET_H = 128, MAX_W = 1024, MIN_W = 128, PAD = 16;
 
 // 1) reduz a foto  2) compensa sombra/iluminação  3) separa a tinta  4) acha a conta
 // 5) afina os traços e redesenha com grossura uniforme (igual à caneta do app)
-export function prepararFoto(src, maxLado = 1000) {
+export function prepararFoto(src, { tudo = false } = {}, maxLado = 1000) {
   const esc0 = Math.min(1, maxLado / Math.max(src.width, src.height));
   const W = Math.max(1, Math.round(src.width * esc0)), H = Math.max(1, Math.round(src.height * esc0));
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
@@ -170,6 +170,7 @@ export function prepararFoto(src, maxLado = 1000) {
     if (bb - rr > 25 && L[i] > 135 && L[i] > fundo2[i] * 0.62) tinta[i] = 0;
   }
   // ... e corridas horizontais longas (atravessam a folha), menos onde um traço cruza
+  // (barra de fração é mais curta e fica no meio; linha de caderno atravessa a folha ou encosta na borda)
   const corrida = Math.max(40, W * 0.18);
   for (let y = 0; y < H; y++) {
     let x = 0;
@@ -177,7 +178,9 @@ export function prepararFoto(src, maxLado = 1000) {
       if (!tinta[y * W + x]) { x++; continue; }
       let fim = x, falha = 0;
       while (fim + 1 < W && (tinta[y * W + fim + 1] || (falha < 3 && ++falha))) { if (tinta[y * W + fim + 1]) falha = 0; fim++; }
-      if (fim - x + 1 >= corrida) {
+      const comp = fim - x + 1;
+      const encosta = x < W * 0.04 || fim > W * 0.96;
+      if (comp >= W * 0.55 || (encosta && comp >= corrida)) {
         for (let k = x; k <= fim; k++) {
           const cima = y > 2 && tinta[(y - 3) * W + k], baixo = y < H - 3 && tinta[(y + 3) * W + k];
           if (!(cima && baixo)) tinta[y * W + k] = 0;
@@ -198,6 +201,7 @@ export function prepararFoto(src, maxLado = 1000) {
     if (h > H * 0.45 || (w > W * 0.7 && h > hMed * 1.5)) return false; // grande demais
     const cheio = c.n / (w * h);
     if (cheio > 0.55 && w * h > hMed * hMed * 2) return false; // mancha cheia (sombra, dedo)
+    if (h > hMed * 3.2 && w < h * 0.12) return false; // risco vertical comprido e reto (borda do papel, sombra)
     const grossura = c.n / Math.max(w, h);
     if (grossura > hMed * 0.6) return false;
     return true;
@@ -222,6 +226,24 @@ export function prepararFoto(src, maxLado = 1000) {
       }
     }
   }
+  // pedaços na mesma linha (ex.: "F(x,y) =" e a fração) se juntam mesmo com espaço maior
+  for (let mudou = true; mudou;) {
+    mudou = false;
+    for (let i = 0; i < grupos.length && !mudou; i++) for (let j = i + 1; j < grupos.length && !mudou; j++) {
+      const a = grupos[i], b = grupos[j];
+      const sobrepoe = Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0);
+      const menor = Math.min(a.y1 - a.y0, b.y1 - b.y0);
+      const distX = Math.max(0, Math.max(a.x0, b.x0) - Math.min(a.x1, b.x1));
+      const distY = Math.max(0, Math.max(a.y0, b.y0) - Math.min(a.y1, b.y1));
+      const juntar = tudo
+        ? (sobrepoe > menor * 0.2 && distX < hMed * 9) || (distX < hMed * 3 && distY < hMed * 3) // recorte: o usuário marcou a conta, tolerância maior
+        : sobrepoe > menor * 0.4 && distX < hMed * 4.5;
+      if (juntar) {
+        a.cs.push(...b.cs); a.n += b.n; a.x0 = Math.min(a.x0, b.x0); a.y0 = Math.min(a.y0, b.y0); a.x1 = Math.max(a.x1, b.x1); a.y1 = Math.max(a.y1, b.y1);
+        grupos.splice(j, 1); mudou = true;
+      }
+    }
+  }
   grupos.sort((a, b) => b.n - a.n);
   const g = grupos[0];
   // máscara só da conta
@@ -235,8 +257,8 @@ export function prepararFoto(src, maxLado = 1000) {
 }
 
 // tensor no formato do modelo (traços brancos uniformes em fundo preto)
-export function imagemParaEntrada(src) {
-  const { esqueleto, w, h } = prepararFoto(src);
+export function imagemParaEntrada(src, opc = {}, prep = null) {
+  const { esqueleto, w, h } = prep || prepararFoto(src, opc);
   const raw = { w: w + PAD * 2, h: h + PAD * 2 };
   const esc = Math.min(TARGET_H / raw.h, MAX_W / raw.w);
   const dw = Math.max(1, Math.round(raw.w * esc)), dh = Math.max(1, Math.round(raw.h * esc));
@@ -245,7 +267,7 @@ export function imagemParaEntrada(src) {
   const ac = alvo.getContext('2d', { willReadFrequently: true });
   ac.fillStyle = '#000'; ac.fillRect(0, 0, canvasW, MODEL_H);
   ac.fillStyle = '#fff';
-  const raio = 1.35; // como a caneta do app depois de reduzida
+  const raio = opc.raio || 1.35; // como a caneta do app depois de reduzida
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (esqueleto[y * w + x]) {
     ac.beginPath(); ac.arc((x + PAD) * esc, (y + PAD) * esc, raio, 0, 6.2832); ac.fill();
   }
@@ -325,8 +347,56 @@ function afinar(img, W, H) {
   return m;
 }
 
-export async function lerImagem(canvas) {
+// lê a foto de alguns jeitos (resoluções e grossuras de traço) e combina por votação, símbolo a símbolo
+// devolve { latex, alternativas: [outras leituras diferentes] }
+const VARIANTES_FOTO = [[1000, 1.35], [700, 1.35], [1000, 1.0], [1000, 2.3]];
+export async function lerImagem(canvas, { tudo = false, valida = () => 1, progresso = () => {} } = {}) {
   await preparar();
-  const r = await motor.recognize(imagemParaEntrada(canvas), vocab, 'auto');
-  return limpar(r.latex);
+  const preps = new Map();
+  const leituras = [];
+  for (const [k, [lado, raio]] of VARIANTES_FOTO.entries()) {
+    progresso(k + 1, VARIANTES_FOTO.length);
+    await new Promise((r) => setTimeout(r, 0));
+    if (!preps.has(lado)) preps.set(lado, prepararFoto(canvas, { tudo }, lado));
+    motor.__confianca = undefined;
+    const r = await motor.recognize(imagemParaEntrada(canvas, { raio }, preps.get(lado)), vocab, 'auto');
+    const latex = limpar(r.latex);
+    if (latex) leituras.push({ latex, conf: motor.__confianca ?? -1 });
+  }
+  if (!leituras.length) return { latex: '', alternativas: [] };
+  const votada = votar(leituras);
+  const cands = [];
+  if (votada) cands.push({ latex: votada, pontos: valida(votada) + 0.3 });
+  for (const l of leituras) cands.push({ latex: l.latex, pontos: valida(l.latex) + l.conf });
+  cands.sort((a, b) => b.pontos - a.pontos);
+  return resultado(cands);
+}
+
+// votação símbolo a símbolo entre leituras do mesmo tamanho
+const fichas = (l) => l.match(/\\[a-zA-Z]+|\S/g) || [];
+function votar(leituras) {
+  const porTam = new Map();
+  for (const l of leituras) { const f = fichas(l.latex); if (!porTam.has(f.length)) porTam.set(f.length, []); porTam.get(f.length).push({ f, conf: l.conf }); }
+  const grupo = [...porTam.values()].sort((a, b) => b.length - a.length)[0];
+  if (!grupo || grupo.length < 2) return null;
+  const n = grupo[0].f.length;
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const noExpoente = i >= 2 && grupo[0].f[i - 1] === '{' && grupo[0].f[i - 2] === '^';
+    const votos = new Map();
+    for (const g of grupo) {
+      const t = g.f[i];
+      let peso = 1 + g.conf; // conf é negativo e pequeno
+      if (noExpoente) peso *= /\d/.test(t) ? (t === '2' ? 1.5 : 1.2) : 0.4; // expoente costuma ser número (x², y³)
+      votos.set(t, (votos.get(t) || 0) + peso);
+    }
+    out.push([...votos.entries()].sort((a, b) => b[1] - a[1])[0][0]);
+  }
+  return out.join(' ').replace(/\s*([{}^_()=+\-])\s*/g, '$1').replace(/(\d) (\d)/g, '$1$2').replace(/ +/g, ' ').trim();
+}
+
+function resultado(leituras) {
+  const vistos = new Set();
+  const unicas = leituras.filter((l) => l.latex && !vistos.has(l.latex) && vistos.add(l.latex));
+  return { latex: unicas[0]?.latex || '', alternativas: unicas.slice(1, 4).map((l) => l.latex) };
 }
