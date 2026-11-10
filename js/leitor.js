@@ -32,12 +32,107 @@ export function limpar(latex) {
     .trim();
 }
 
-export async function lerTracos(tracos) {
+export async function lerTracos(tracos, valida) {
+  return (await lerTracosMelhor(tracos, valida)).melhor.latex;
+}
+
+// escolhe a leitura mais provável entre as direções testadas
+// valida(latex) → 0 (não é conta), 1 (conta válida) ou 1.5 (conta que o motor resolve)
+export async function lerTracosMelhor(tracos, valida = () => 1) {
+  const { cands, nGrupos, barra } = await lerTracosEmTodasDirecoes(tracos);
+  const lidos = [];
+  const ler = async (c) => {
+    motor.__confianca = undefined;
+    const r = await motor.recognize(preprocessStrokes(c.s), vocab, 'auto');
+    const latex = limpar(r.latex);
+    let p = (motor.__confianca ?? -5);
+    if (!latex) p -= 10; else p += valida(latex);
+    if (nGrupos >= 2) p -= 0.25 * Math.abs(simbolos(latex) - nGrupos);
+    if (c.nome === 'normal') p += 0.15;
+    if (!barra && /\\frac/.test(latex)) p -= 0.6; // não desenhou traço de fração
+    lidos.push({ nome: c.nome, latex, pontos: p });
+  };
+  for (const c of cands.filter((c) => !c.depois)) await ler(c);
+  // as versões giradas só se nenhuma leitura fez sentido
+  if (Math.max(...lidos.map((l) => l.pontos)) < 1.35) for (const c of cands.filter((c) => c.depois)) await ler(c);
+  const ord = lidos.sort((a, b) => b.pontos - a.pontos);
+  return { melhor: ord[0], todas: ord };
+}
+
+// ---------- escrita em qualquer direção ----------
+function caixa(strokes) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const s of strokes) for (const p of s.points) { x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y); }
+  return { x0, y0, x1, y1, w: x1 - x0, h: y1 - y0 };
+}
+const mover = (s, dx, dy) => ({ ...s, points: s.points.map((p) => ({ x: p.x + dx, y: p.y + dy })) });
+function girar(strokes, sentido) {
+  // sentido 1: 90° horário; -1: anti-horário
+  return strokes.map((s) => ({ ...s, points: s.points.map((p) => (sentido > 0 ? { x: -p.y, y: p.x } : { x: p.y, y: -p.x })) }));
+}
+// separa a escrita em "linhas" de cima para baixo (símbolos empilhados)
+export function gruposVerticais(strokes) {
+  const itens = strokes.map((s) => ({ s, b: caixa([s]) })).sort((a, b) => a.b.y0 - b.b.y0);
+  let grupos = [];
+  for (const it of itens) {
+    const g = grupos.find((g) => it.b.y0 <= g.y1 && it.b.y1 >= g.y0);
+    if (g) { g.itens.push(it); g.y0 = Math.min(g.y0, it.b.y0); g.y1 = Math.max(g.y1, it.b.y1); }
+    else grupos.push({ itens: [it], y0: it.b.y0, y1: it.b.y1 });
+  }
+  // junta grupos que se encostam (ex.: os dois traços do "=")
+  grupos.sort((a, b) => a.y0 - b.y0);
+  const alturas = grupos.map((g) => g.y1 - g.y0).sort((a, b) => a - b);
+  const med = Math.max(12, alturas[Math.floor(alturas.length / 2)] || 12);
+  const out = [];
+  for (const g of grupos) {
+    const u = out[out.length - 1];
+    const fino = (h) => h < med * 0.35;
+    if (u && g.y0 - u.y1 < med * 0.45 && (fino(g.y1 - g.y0) || fino(u.y1 - u.y0))) { u.itens.push(...g.itens); u.y1 = Math.max(u.y1, g.y1); }
+    else out.push({ ...g, itens: [...g.itens] });
+  }
+  return out.map((g) => g.itens.map((i) => i.s));
+}
+// coloca os grupos empilhados lado a lado, numa linha só
+function emLinha(grupos) {
+  const caixas = grupos.map(caixa);
+  const altura = Math.max(...caixas.map((c) => c.h), 10);
+  let cursor = 0;
+  const out = [];
+  grupos.forEach((g, i) => {
+    const c = caixas[i];
+    const dx = cursor - c.x0, dy = altura / 2 - (c.y0 + c.h / 2);
+    for (const s of g) out.push(mover(s, dx, dy));
+    cursor += c.w + altura * 0.35;
+  });
+  return out;
+}
+// tem um traço de fração? (traço horizontal bem mais largo que todos os outros)
+function temBarraDeFracao(strokes) {
+  const cx = strokes.map((s) => caixa([s]));
+  return cx.some((c, i) => {
+    if (c.h > c.w * 0.25 || c.w < 20) return false;
+    const outros = cx.filter((_, j) => j !== i).map((o) => o.w);
+    return outros.length > 0 && c.w > Math.max(...outros) * 1.25;
+  });
+}
+const simbolos = (l) => l.replace(/\\(left|right)/g, '').replace(/\\[a-zA-Z]+/g, '#').replace(/[{}\s^_]/g, '').length;
+
+export async function lerTracosEmTodasDirecoes(tracos) {
   const strokes = tracos.map((t) => ({ points: t.pts.map((p) => ({ x: p.x, y: p.y })), lineWidth: Math.max(3, t.esp * 0.8) }));
   if (!isStrokeMeaningful(strokes)) throw new Error('Escreva a conta um pouco maior.');
   await preparar();
-  const r = await motor.recognize(preprocessStrokes(strokes), vocab, 'auto');
-  return limpar(r.latex);
+  const b = caixa(strokes);
+  const cands = [{ nome: 'normal', s: strokes }];
+  let nGrupos = 0, barra = true;
+  if (b.h > b.w * 1.15) {
+    // escrita "em pé": pode ser em coluna (um símbolo embaixo do outro) ou de lado
+    const g = gruposVerticais(strokes);
+    nGrupos = g.length;
+    barra = temBarraDeFracao(strokes);
+    if (g.length >= 2) cands.push({ nome: 'coluna', s: emLinha(g) });
+    cands.push({ nome: 'girada-direita', s: girar(strokes, -1), depois: true }, { nome: 'girada-esquerda', s: girar(strokes, 1), depois: true });
+  }
+  return { cands, nGrupos, barra };
 }
 
 // ---------- foto ----------

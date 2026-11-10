@@ -120,7 +120,7 @@ math-field::part(menu-toggle), math-field::part(virtual-keyboard-toggle) { displ
 /* ---------- escrever ---------- */
 .caneta-caixa { position: relative; flex: 1; min-height: 0; display: flex; }
 .folha { flex: 1; overflow: auto; background: #fffef9; touch-action: none; overscroll-behavior: contain; }
-#papel { display: block; width: 100%; touch-action: none; }
+#papel { display: block; touch-action: none; }
 .flutuante { position: absolute; bottom: 16px; display: flex; gap: 8px; padding: 6px; background: rgba(255, 255, 255, .95); border-radius: 30px; box-shadow: 0 4px 16px rgba(21, 28, 51, .16); }
 .flutuante.esquerda { left: 14px; }
 .redondo { width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--sup2); color: var(--texto); display: grid; place-items: center; }
@@ -206,7 +206,9 @@ math-field::part(menu-toggle), math-field::part(virtual-keyboard-toggle) { displ
 .sobre img { width: 52px; }
 .sobre small { color: #9aa7c0; }
 .historico { list-style: none; padding: 0; margin: 0; max-height: 55vh; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
-.historico li { padding: 12px 14px; border-radius: 16px; background: var(--sup2); overflow-x: auto; }
+.historico li { flex: none; padding: 12px 14px; border-radius: 16px; background: var(--sup2); }
+.historico li .mat { overflow-x: auto; overflow-y: visible; }
+.historico .res { color: var(--azul-esc); font-weight: 700; font-size: 14px; margin-top: 2px; }
 .historico li small { display: block; color: var(--suave); font-size: 12px; margin-top: 4px; }
 .historico .vazio { color: var(--suave); text-align: center; }
 

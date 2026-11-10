@@ -22,10 +22,15 @@ export class Caneta {
     for (const ev of ['pointerup', 'pointercancel']) canvas.addEventListener(ev, (e) => this.cima(e));
   }
   ajustar() {
-    const w = this.rol.clientWidth;
-    if (!w) return;
+    const vis = this.rol.clientWidth;
+    if (!vis) return;
+    // a folha cresce para o lado se o que foi escrito (ex.: com o celular deitado) for mais largo que a tela
+    let maxX = 0;
+    for (const t of this.tracos) for (const p of t.pts) if (p.x > maxX) maxX = p.x;
+    const w = Math.max(vis, Math.ceil(maxX + 40));
     const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
     this.cv.style.height = ALTURA_FOLHA + 'px';
+    this.cv.style.width = w + 'px';
     if (this.cv.width === Math.round(w * dpr) && this.dpr === dpr) return;
     this.cv.width = Math.round(w * dpr);
     this.cv.height = Math.round(ALTURA_FOLHA * dpr);
@@ -78,7 +83,7 @@ export class Caneta {
     else if (this.pan) this.pan = { y: this.mediaY(), x: this.mediaX(), top: this.rol.scrollTop, left: this.rol.scrollLeft };
   }
   desfazer() { this.tracos.pop(); this.redesenhar(); this.onMudou?.(); }
-  limpar() { this.tracos = []; this.rol.scrollTop = 0; this.redesenhar(); this.onMudou?.(); }
+  limpar() { this.tracos = []; this.rol.scrollTop = 0; this.rol.scrollLeft = 0; this.ajustar(); this.redesenhar(); this.onMudou?.(); }
   get vazio() { return this.tracos.length === 0; }
 
   // só os traços da última conta escrita (agrupa pela altura, a partir do último traço)

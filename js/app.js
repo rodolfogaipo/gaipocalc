@@ -264,6 +264,12 @@ function usarLeitura(latex, de) {
   resolverLatex(latex, `lido da ${de} — confira`);
 }
 
+// nota de uma leitura: é conta? o motor resolve?
+function validarLeitura(latex) {
+  try { analisar(latex); } catch { return 0; }
+  try { resolver(latex, opts()); return 1.5; } catch { return 1; }
+}
+
 // ---------- escrever ----------
 $('canDesfazer').addEventListener('click', () => caneta.desfazer());
 $('canLimpar').addEventListener('click', () => caneta.limpar());
@@ -283,7 +289,7 @@ async function lerCaneta() {
   carregando('Lendo sua letra…');
   try {
     const m = await leitor();
-    const latex = await m.lerTracos(caneta.ultimaConta());
+    const latex = await m.lerTracos(caneta.ultimaConta(), validarLeitura);
     if ($('canetaCaixa').classList.contains('cheia')) telaCheia(false);
     usarLeitura(latex, 'caneta');
   } catch (e) { console.error(e); toast(e.message || 'Não consegui ler a escrita.', true); }
@@ -458,7 +464,8 @@ $('btnHistorico').addEventListener('click', () => {
   if (!h.length) { const li = document.createElement('li'); li.className = 'vazio'; li.textContent = 'Suas contas resolvidas aparecem aqui.'; ul.append(li); }
   for (const x of h) {
     const li = document.createElement('li');
-    const m = document.createElement('div'); mat(m, x.latex, false); li.append(m);
+    const m = document.createElement('div'); m.className = 'mat'; mat(m, x.latex, false); li.append(m);
+    if (x.resposta && x.resposta.length < 120 && !x.resposta.startsWith('\\begin')) { const r = document.createElement('div'); r.className = 'mat res'; const rr = x.resposta.replace(/^[a-zA-Z]'?\(x\)=/, ''); mat(r, (/=|\\le|\\ge|<|>/.test(rr) ? '' : '=\\;') + rr, false); li.append(r); }
     const s = document.createElement('small'); s.textContent = `${x.tipo || ''} · ${new Date(x.t).toLocaleString('pt-BR')}`; li.append(s);
     li.addEventListener('click', () => { $('dlgHistorico').close(); trocarAba('teclado'); mf.value = x.latex; atualizarPrevia(); resolverLatex(x.latex); });
     ul.append(li);

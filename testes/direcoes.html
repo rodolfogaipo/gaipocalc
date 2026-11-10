@@ -1,0 +1,33 @@
+<!doctype html><meta charset="utf-8"><title>teste direções</title><pre id="out">...</pre>
+<script type="module">
+import { lerTracosMelhor } from '../js/leitor.js';
+import { resolver, analisar } from '../js/motor/index.js';
+const valida = (l) => { try { analisar(l); } catch { return 0; } try { resolver(l); return 1.5; } catch { return 1; } };
+const arc = (cx, cy, r, a0, a1, n = 14) => Array.from({ length: n + 1 }, (_, i) => { const a = a0 + (a1 - a0) * i / n; return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) }; });
+const lin = (x0, y0, x1, y1, n = 8) => Array.from({ length: n + 1 }, (_, i) => ({ x: x0 + (x1 - x0) * i / n, y: y0 + (y1 - y0) * i / n }));
+const G = {
+  '2': (o, v) => [[...arc(o + 20, v + 35, 18, Math.PI * 1.1, Math.PI * 2.2), ...lin(o + 36, v + 45, o + 2, v + 90).slice(1), ...lin(o + 2, v + 90, o + 40, v + 90).slice(1)]],
+  '3': (o, v) => [[...arc(o + 18, v + 32, 16, Math.PI * 1.2, Math.PI * 2.5), ...arc(o + 18, v + 70, 20, Math.PI * 1.5, Math.PI * 2.85).slice(1)]],
+  '7': (o, v) => [[...lin(o, v + 15, o + 40, v + 15), ...lin(o + 40, v + 15, o + 15, v + 90).slice(1)]],
+  'x': (o, v) => [lin(o, v + 45, o + 32, v + 90), lin(o + 32, v + 45, o, v + 90)],
+  '+': (o, v) => [lin(o, v + 60, o + 36, v + 60), lin(o + 18, v + 42, o + 18, v + 78)],
+  '=': (o, v) => [lin(o, v + 52, o + 36, v + 52), lin(o, v + 70, o + 36, v + 70)],
+  '1': (o, v) => [[...lin(o + 8, v + 25, o + 20, v + 12), ...lin(o + 20, v + 12, o + 20, v + 90).slice(1)]],
+};
+const T = (pts) => ({ pts, esp: 4 });
+const linha = (txt) => { let s = []; [...txt].forEach((c, k) => s.push(...G[c](20 + k * 55, 0).map(T))); return s; };
+const coluna = (txt) => { let s = []; [...txt].forEach((c, k) => s.push(...G[c](40, k * 110).map(T))); return s; };
+const deLado = (txt) => linha(txt).map((t) => ({ ...t, pts: t.pts.map((p) => ({ x: 300 - p.y, y: p.x })) }));
+const fracao = () => [...G['1'](30, 0).map(T), T(lin(0, 112, 100, 112)), ...G['2'](30, 120).map(T)];
+(async () => {
+  const res = [];
+  for (const [nome, tr] of [['coluna 2+2', coluna('2+2')], ['coluna 2+3=5'.replace('5','7'), coluna('2+3=7')], ['de lado 2x+3=7', deLado('2x+3=7')], ['normal 2x+3=7', linha('2x+3=7')], ['fração 1/2', fracao()]]) {
+    const t0 = performance.now();
+    try {
+      const r = await lerTracosMelhor(tr, valida);
+      res.push(`${nome.padEnd(18)} → ${r.melhor.latex.padEnd(16)} [${r.melhor.nome}] ${Math.round(performance.now() - t0)}ms  | ` + r.todas.map((c) => `${c.nome}:${c.latex}(${c.pontos.toFixed(2)})`).join('  '));
+    } catch (e) { res.push(nome + ' ERRO ' + e.message); }
+  }
+  document.getElementById('out').textContent = res.join('\n');
+})();
+</script>
